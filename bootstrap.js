@@ -17,6 +17,8 @@ const bootstrap = (app) => {
     });
   });
 
+  //open cors for all origins
+  app.use(cors());
   // CORS
   // app.use(cors({
   //   origin:(origin,cb)=>{
