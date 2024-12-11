@@ -12,14 +12,7 @@ env.config();
 //   host: 'localhost',
 //   dialect: 'postgres',
 // });
-export const sequelize = new Sequelize(process.env.Db_Ext_Url, {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  }
-});
+export const sequelize = new Sequelize(process.env.Db_Ext_Url);
 
 // start migration
 export const userModel = models.userModelDefinition(sequelize, Sequelize);
