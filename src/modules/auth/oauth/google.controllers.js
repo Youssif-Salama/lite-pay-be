@@ -16,8 +16,8 @@ export const loginWithGoogle = (req, res, next) => {
 export const callBackGoogleLogin = (req, res, next) => {
   const user = req.user;
 
-  const state = JSON.parse(req.query.state || '{}');
-  const lang = state.lang || 'en';
+  // const state = JSON.parse(req.query.state || '{}');
+  // const lang = state.lang || 'en';
 
   if (!user) {
     return res.status(400).json({ message: "Authentication failed." });
@@ -28,7 +28,7 @@ export const callBackGoogleLogin = (req, res, next) => {
       name:user.profile._json.name,
       googleId:user.profile.id,
       accessToken:user.profile._json.accessToken,
-      lang
+      // lang
     }
     next();
   }
