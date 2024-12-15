@@ -8,7 +8,7 @@ env.config();
 const GoogleOauthRouter = Router();
 
 // login with google
-GoogleOauthRouter.get("/google",loginWithGoogle);
+GoogleOauthRouter.get("/google/:lang",loginWithGoogle);
 GoogleOauthRouter.get("/google/callback",
   passport.authenticate("google",{session: false ,failureRedirect:"/"})
   ,callBackGoogleLogin,addNewGoogleLoggedInUser);
