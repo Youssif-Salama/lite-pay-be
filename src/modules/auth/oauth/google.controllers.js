@@ -3,7 +3,7 @@ import passportIntegrationWithGoogle from "./google.config.js";
 
 // login with google controller
 export const loginWithGoogle = (req, res, next) => {
-  const {lang}=req.params;
+  // const {lang}=req.params;
   passport.authenticate('google', {
     session: false,
     scope: ['profile', 'email'],
