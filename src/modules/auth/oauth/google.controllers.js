@@ -7,7 +7,7 @@ export const loginWithGoogle = (req, res, next) => {
   passport.authenticate('google', {
     session: false,
     scope: ['profile', 'email'],
-    state:JSON.stringify({lang})
+    // state:JSON.stringify({lang})
   })(req, res, next);
 };
 
