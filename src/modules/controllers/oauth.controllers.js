@@ -1,4 +1,4 @@
-import { userModel } from "../../../db/dbConnection.js";
+import { userModel,roleModel } from "../../../db/dbConnection.js";
 import { ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import { makeToken } from "../../utils/jwt/jwt.utils.js";
 
