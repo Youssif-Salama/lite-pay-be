@@ -6,12 +6,20 @@ export const addNewGoogleLoggedInUser= ErrorHandlerService(async (req, res) => {
   const { email, name, googleId, accessToken ,lang} = req.data;
   // check if this email has a normal account
   const checkIfEmailUsed = await userModel.findOne({ where: { email } });
+
+    // find the user role
+    const findUserRole=await roleModel.findOne({type:"user"});
+    if(!findUserRole) throw new AppErrorService(400,"failed to find user role");
+
+
   if (!checkIfEmailUsed) {
     const signUpNewUser = await userModel.create({
       userName: name,
       email,
       googleId,
+      roleId:findUserRole.id
     });
+
     if (!signUpNewUser)
       throw new AppErrorService(400, "failed to create user");
     const token = makeToken({ user: signUpNewUser, accessToken });
