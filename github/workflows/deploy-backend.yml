@@ -1,0 +1,29 @@
+name: Deploy Backend to OnRender
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to OnRender
+        run: |
+          curl -fsSL https://github.com/OnRender/onrender-cli/releases/download/v1.0.0/render-cli-linux-amd64 -o render-cli
+          chmod +x render-cli
+          ./render-cli login --token ${{ secrets.LITEPAY }}
+          ./render-cli deploy --service lite-pay-be --branch main
