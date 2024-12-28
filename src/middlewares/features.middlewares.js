@@ -1,5 +1,6 @@
+import { Op, where } from 'sequelize';
+import { allModels as models } from '../../db/dbConnection.js';
 import { AppErrorService, ErrorHandlerService } from '../services/ErrorHandler.services.js';
-
 /**
  * @description
  * A middleware to handle pagination. It takes a Sequelize model as an argument.
@@ -22,7 +23,15 @@ export const paginationMiddleware = (model) => {
     const offset = (page - 1) * limit;
 
     try {
-      const totalRows = await model.count();
+      let totalRows;
+      if(req.dbQuery){
+        totalRows= await models[model].count({
+          where: req.dbQuery.where,
+        })
+      }
+      else{
+        totalRows= await models[model].count()
+      }
       const totalPages = Math.ceil(totalRows / limit);
 
       const meta = {
@@ -93,7 +102,7 @@ export const populateMiddleware = (populate,model,alias) => ErrorHandlerService(
       include: populateFields.map(field => {
           return {
             model,
-            as:alias,
+            as:alias && alias,
             attributes: selectFields
           };
       })
@@ -104,3 +113,50 @@ export const populateMiddleware = (populate,model,alias) => ErrorHandlerService(
     next(error);
   }
 });
+
+
+export const includeMiddleware = (includes) =>
+  ErrorHandlerService(async (req, res, next) => {
+    req.dbQuery ={
+      ...req.dbQuery,
+      include:
+        includes.map((item) => ({
+          model: models[item.model],
+          attributes: item.attributes || undefined,
+          as: item.alias || undefined,
+        }))
+    }
+    next();
+  });
+
+
+  export const searchMiddlware=(searchKeys)=>ErrorHandlerService(async(req,res,next)=>{
+    const {searchWord}=req.query;
+    if(!searchWord) return next();
+    const searchCriteria=searchKeys.map(key=>{
+      return {
+        [key]:{
+          [Op.like]:`%${searchWord}%`
+        }
+      }
+    })
+    req.dbQuery={
+      ...req.dbQuery,
+      where:{
+        [Op.or]:searchCriteria
+      }
+    }
+    next();
+  })
+
+  export const sortingMiddleware=()=>ErrorHandlerService(async(req,res,next)=>{
+    const {sortKey,sortValue}=req.query;
+    if(!sortKey || !sortValue) return next();
+    else{
+      req.dbQuery={
+        ...req.dbQuery,
+        order:[[sortKey,sortValue]]
+      }
+      next();
+    }
+  })

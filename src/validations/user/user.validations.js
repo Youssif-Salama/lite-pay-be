@@ -17,4 +17,44 @@ export const updateUserValidationSchema = Joi.object({
   })
 }).min(1).messages({
   "object.min":"At least one field must be updated"
+});
+
+export const changeUserRoleSchema=Joi.object({
+  roleId:Joi.string()
+  .required()
+  .messages({
+    "string.empty":"roleId shouldn't be empty",
+    "any.required":"roleId is required"
+  })
+  ,userId:Joi.string()
+  .required()
+  .messages({
+    "string.empty":"roleId shouldn't be empty",
+    "any.required":"roleId is required"
+  })
+})
+
+export const addUserRatingSchema=Joi.object({
+  ratingValue:Joi.number()
+  .required()
+  .messages({
+    "number.empty":"roleId shouldn't be empty",
+    "any.required":"roleId is required"
+  })
+  ,userId:Joi.string()
+  .required()
+  .messages({
+    "string.empty":"roleId shouldn't be empty",
+    "any.required":"roleId is required"
+  })
+})
+
+
+export const changeRoleAutoSchema=Joi.object({
+  userId:Joi.string()
+  .required()
+  .messages({
+    "string.empty":"roleId shouldn't be empty",
+    "any.required":"roleId is required"
+  })
 })

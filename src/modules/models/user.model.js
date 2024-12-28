@@ -20,6 +20,22 @@ export default (sequelize,DataTypes)=>{
       type: DataTypes.STRING,
       allowNull: true,
     },
+    phoneNumber:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    telegram:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    gender:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    age:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active',
@@ -34,6 +50,17 @@ export default (sequelize,DataTypes)=>{
         model: 'Roles',
         key: 'id',
       },
+    },
+    cards: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: true,
+    },
+    requests: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: true,
+    },
+    rating:{
+      type:DataTypes.FLOAT
     }
   }, {
     timestamps: true,

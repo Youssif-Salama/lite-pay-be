@@ -1,17 +1,18 @@
 import {Router} from "express";
 import { authentication } from "../../middlewares/auth.middlewares.js";
-import { blockUser, deleteMyAccount, forgotPasswordReq, getAllUsers, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword } from "../controllers/user.controllers.js";
+import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword } from "../controllers/user.controllers.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { paginationMiddleware, populateMiddleware, selectMiddleware } from "../../middlewares/features.middlewares.js";
-import { roleModel, userModel } from "../../../db/dbConnection.js";
-import { updateUserValidationSchema } from "../../validations/user/user.validations.js";
+import { roleModel } from "../../../db/dbConnection.js";
+import { addUserRatingSchema, changeRoleAutoSchema, changeUserRoleSchema, updateUserValidationSchema } from "../../validations/user/user.validations.js";
+import cardRouter from "./card.routes.js";
 
 
 
 const userRouter=Router();
 
 // get all users
-userRouter.get("/",authentication,paginationMiddleware(userModel),selectMiddleware(),populateMiddleware('[{"model": "Role", "attributes": ["id", "name","type"]}]',roleModel,"role","one"),getAllUsers);
+userRouter.get("/",authentication,paginationMiddleware("userModel"),selectMiddleware(),populateMiddleware('[{"model": "Role", "attributes": ["id", "name","type"]}]',roleModel,"role","one"),getAllUsers);
 
 //delete my account
 userRouter.delete("/delete",authentication,deleteMyAccount);
@@ -33,5 +34,21 @@ userRouter.post("/reset-password-req",forgotPasswordReq);
 
 // reset password do
 userRouter.post("/reset-password-do",resetPasswordDo)
+
+
+// change user role
+userRouter.put("/change-role",authentication,validate(changeUserRoleSchema),changeUserRole)
+
+// add user rate
+userRouter.post("/rating",authentication,validate(addUserRatingSchema),addSpecificUserRating)
+
+// auto role changer
+userRouter.put("/change-role-auto",authentication,autoRequestsListenerForVipRole);
+
+// get all my raquests and transactions
+userRouter.get("/req-trans",authentication,getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsPagination);
+
+// use cards router
+userRouter. use("/:id/cards",cardRouter);
 
 export default userRouter;

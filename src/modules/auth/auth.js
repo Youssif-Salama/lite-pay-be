@@ -34,9 +34,16 @@ export const signup=ErrorHandlerService(async(req,res)=>{
 export const login=ErrorHandlerService(async(req,res)=>{
   const {password}=req.body;
   const foundUser=req.user;
-  const {password:hashedPassword}=await credentialModel.findOne({userId:foundUser.id});
+
+  const userCredits=await credentialModel.findAll(
+    {
+      where:{userId:foundUser.id}
+    }
+  );
+  const hashedPassword=userCredits[0].password;
   if(!hashedPassword) throw new AppErrorService(400,"failed to get user credentials");
   const isValidPassword=comparePassword(password,hashedPassword);
+  console.log({password,hashedPassword});
   if(!isValidPassword) throw new AppErrorService(400,"invalid password");
   const token=makeToken({user:foundUser});
   res.status(200).json({message:"login success",token});

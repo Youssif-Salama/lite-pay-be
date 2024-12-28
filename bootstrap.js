@@ -17,6 +17,8 @@ const bootstrap = (app) => {
     });
   });
 
+  app.use(cors());
+
   // CORS
   // app.use(cors({
   //   origin:(origin,cb)=>{
@@ -47,7 +49,8 @@ const bootstrap = (app) => {
 
   fireDbConnection()
   .then(() => {
-    // syncDb();
+    // syncDb({force:true});
+    // syncDb({alter:true});
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });

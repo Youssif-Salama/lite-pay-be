@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize";
+import { DataTypes, Sequelize } from "sequelize";
 import * as models from "./import.db.js"
 import env from "dotenv";
 env.config();
@@ -8,23 +8,24 @@ env.config();
  - we use env variables to connect to our database
  - it's an instance of the Sequelize class
 */
-// export const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
-//   host: 'localhost',
-//   dialect: 'postgres',
-// });
-export const sequelize = new Sequelize(process.env.Db_Ext_Url, {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  }
+export const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
+  host: 'localhost',
+  dialect: 'postgres',
 });
+
 
 // start migration
 export const userModel = models.userModelDefinition(sequelize, Sequelize);
 export const roleModel = models.roleModelDefinition(sequelize, Sequelize);
 export const credentialModel = models.credentialModelDefinition(sequelize, Sequelize);
+export const cardModel=models.cardModelDefination(sequelize,DataTypes);
+export const requestModel=models.requestModelDefinition(sequelize,DataTypes);
+export const transactionModel=models.transactionModelDefinition(sequelize,DataTypes);
+export const cardPriceModel=models.cardPriceModelDefination(sequelize,DataTypes);
+export const promoModel=models.promoModelDefination(sequelize,DataTypes);
+export const ratingModel=models.ratingModelDefination(sequelize,DataTypes);
+
+export const allModels = {userModel, roleModel, credentialModel,cardModel,requestModel,transactionModel,cardPriceModel,promoModel,ratingModel};
 // end migration
 
 
@@ -32,11 +33,15 @@ export const credentialModel = models.credentialModelDefinition(sequelize, Seque
 roleModel.hasMany(userModel, { foreignKey: 'roleId', as: 'users' });
 userModel.belongsTo(roleModel, { foreignKey: 'roleId', as: 'role' });
 userModel.hasOne(credentialModel, { foreignKey: 'userId',as:"credential" });
+userModel.hasMany(cardModel,{foreignKey:"userId"});
+cardModel.belongsTo(userModel,{foreignKey:"userId"});
+userModel.hasMany(requestModel,{foreignKey:"userId"});
+requestModel.belongsTo(userModel,{foreignKey:"userId"});
+cardModel.hasMany(requestModel,{foreignKey:"cardId"});
+requestModel.belongsTo(cardModel,{foreignKey:"cardId"});
+cardModel.hasMany(transactionModel,{foreignKey:"cardId"});
+transactionModel.belongsTo(cardModel,{foreignKey:"cardId"});
 // end relations
-
-
-
-
 
 
 
