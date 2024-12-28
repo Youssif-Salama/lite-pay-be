@@ -16,5 +16,4 @@ startPolling((data) =>
     }),
   })
 );
-
 bootstrap(app);
