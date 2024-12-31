@@ -1,15 +1,93 @@
 import { cardModel, transactionModel } from "../../db/dbConnection.js";
 import { fetchFromBankApi } from "../modules/controllers/bank.card.controllers.js";
+import fetchBrandData from "../services/Avatar.services.js";
 import { AppErrorService, ErrorHandlerService } from "../services/ErrorHandler.services.js";
 import Queue from 'bull';
 import env from "dotenv";
 env.config();
 
 // Polling bank transactions with callback for database handling
+// export const displayBankTransactionsInterval = (callback) => {
+//   let result = null;
+//   let pollingInterval = 10000;
+//   const maxInterval = 20000;
+//   let intervalId;
+
+//   const path = "/transactions";
+//   const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1);
+//   const url = `${modifiedUrl}/${process.env.Bank_Id}${path}`;
+
+//   const pollTransactions = async () => {
+//     try {
+//       const data = await fetchFromBankApi(url);
+//       const transactions = data?.transactions;
+
+//       if (JSON.stringify(transactions) !== JSON.stringify(result)) {
+//         result = transactions;
+
+//         const existingTransactions = await transactionModel.findAll({
+//           attributes: ["transactionId"],
+//         });
+//         const existingTransactionIds = existingTransactions.map(
+//           (tx) => tx.transactionId
+//         );
+
+//         const filteredData = result
+//           .filter((item) => item?.details?.debitCardInfo?.id && item)
+//           .filter((item) => !existingTransactionIds.includes(item?.id));
+
+//         if (filteredData.length > 0) {
+//           const arrangedData = filteredData.map((item) => {
+//             // amount
+//             let amount = item?.amount;
+//             if(item?.relatedTransactions?.amount) amount +=item?.relatedTransactions?.amount;
+
+//             // status
+//             let itemStatus = "pending";
+//             if (item?.status === "sent") itemStatus = "approved";
+//             if (item?.status === "failed") itemStatus = "rejected";
+
+//             return {
+//               amount: amount,
+//               transactionId: item?.id,
+//               companyName: item?.counterpartyName,
+//               date: item?.estimatedDeliveryDate,
+//               time: item?.postedAt,
+//               failureReason: item?.reasonForFailure,
+//               category: item?.mercuryCategory,
+//               bankCardId: item?.details?.debitCardInfo?.id,
+//               details: JSON.stringify({details:item?.details,relatedTransactions:item?.relatedTransactions}),
+//               status: itemStatus,
+//               bankCreatedAt: item?.createdAt,
+//             };
+//           });
+
+//           if (typeof callback === "function") {
+//             await callback(arrangedData);
+//           }
+//         }
+
+//         pollingInterval = 10000;
+//       }
+//     } catch (error) {
+//       console.error("Error fetching transactions:", error);
+//       pollingInterval = Math.min(maxInterval, pollingInterval * 2);
+//     } finally {
+//       clearInterval(intervalId);
+//       intervalId = setInterval(pollTransactions, pollingInterval);
+//     }
+//   };
+
+//   intervalId = setInterval(pollTransactions, pollingInterval);
+
+//   return () => clearInterval(intervalId);
+// };
+
+
 export const displayBankTransactionsInterval = (callback) => {
   let result = null;
-  let pollingInterval = 60000; // initial interval in ms
-  const maxInterval = 60000*2; // maximum backoff interval in ms
+  let pollingInterval = 10000;
+  const maxInterval = 20000;
   let intervalId;
 
   const path = "/transactions";
@@ -36,30 +114,41 @@ export const displayBankTransactionsInterval = (callback) => {
           .filter((item) => !existingTransactionIds.includes(item?.id));
 
         if (filteredData.length > 0) {
-          const arrangedData = filteredData.map((item) => {
-            // amount
-            let amount = item?.amount;
-            if(item?.relatedTransactions?.amount) amount +=item?.relatedTransactions?.amount;
+          const arrangedData = await Promise.all(
+            filteredData.map(async (item) => {
+              // Fetch the brand avatar
+              const avatar = await fetchBrandData(item?.counterpartyName);
 
-            // status
-            let itemStatus = "pending";
-            if (item?.status === "sent") itemStatus = "approved";
-            if (item?.status === "failed") itemStatus = "rejected";
+              // Calculate amount
+              let amount = item?.amount;
+              if (item?.relatedTransactions?.amount) {
+                amount += item?.relatedTransactions?.amount;
+              }
 
-            return {
-              amount: amount,
-              transactionId: item?.id,
-              companyName: item?.counterpartyName,
-              date: item?.estimatedDeliveryDate,
-              time: item?.postedAt,
-              failureReason: item?.reasonForFailure,
-              category: item?.mercuryCategory,
-              bankCardId: item?.details?.debitCardInfo?.id,
-              details: JSON.stringify({details:item?.details,relatedTransactions:item?.relatedTransactions}),
-              status: itemStatus,
-              bankCreatedAt: item?.createdAt,
-            };
-          });
+              // Determine status
+              let itemStatus = "pending";
+              if (item?.status === "sent") itemStatus = "approved";
+              if (item?.status === "failed") itemStatus = "rejected";
+
+              return {
+                amount: amount,
+                transactionId: item?.id,
+                companyName: item?.counterpartyName,
+                avatar: avatar, // Include avatar in the transaction data
+                date: item?.estimatedDeliveryDate,
+                time: item?.postedAt,
+                failureReason: item?.reasonForFailure,
+                category: item?.mercuryCategory,
+                bankCardId: item?.details?.debitCardInfo?.id,
+                details: JSON.stringify({
+                  details: item?.details,
+                  relatedTransactions: item?.relatedTransactions,
+                }),
+                status: itemStatus,
+                bankCreatedAt: item?.createdAt,
+              };
+            })
+          );
 
           if (typeof callback === "function") {
             await callback(arrangedData);
@@ -81,6 +170,7 @@ export const displayBankTransactionsInterval = (callback) => {
 
   return () => clearInterval(intervalId);
 };
+
 
 
 

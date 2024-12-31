@@ -4,7 +4,7 @@ import { authentication } from "../../middlewares/auth.middlewares.js";
 
 const transactionRouter=Router();
 // get all
-transactionRouter.get("/",getAllTransactions);
+transactionRouter.get("/",authentication,getAllTransactions);
 
 // add new Transaction
 transactionRouter.post("/",authentication,addNewDashboardTransaction);
