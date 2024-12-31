@@ -36,3 +36,26 @@ export const sendEmail = async (email) => {
     console.error("Error sending email:", error);
   }
 };
+
+
+export const sendOtpEmail = async (otp,email) => {
+  try {
+    const mailOptions = {
+      from: process.env.Email_User,
+      to: email,
+      subject: "authenticate your account lite pay",
+      html:`
+      <div>
+      <h1>Lite Pay</h1>
+      <p> This email for authenticate your account </p>
+      <p> Copy this otp</p>
+      <p>${otp}</p>
+      </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};

@@ -4,12 +4,13 @@ import { login, signup } from "../auth/auth.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { signupValidationSchema } from "../../validations/auth/auth.validations.js";
 import GoogleOauthRouter from "./oauth.routes.js";
+import { otpWhatsApp } from "../controllers/whatsapp.controllers.js";
 
 const authRouter=Router();
 
 authRouter.post("/signup",validate(signupValidationSchema),checkUserExistence("signup"),signup);
 authRouter.post("/login",validate(signupValidationSchema),checkUserExistence("login"),login);
-
+authRouter.post("/otp",otpWhatsApp);
 
 
 authRouter.use("/",GoogleOauthRouter);
