@@ -8,18 +8,18 @@ env.config();
  - we use env variables to connect to our database
  - it's an instance of the Sequelize class
 */
-// export const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
-//   host: 'localhost',
-//   dialect: 'postgres',
-// });
-export const sequelize = new Sequelize(process.env.Db_Ext_Url, {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  }
+export const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
+  host: 'localhost',
+  dialect: 'postgres',
 });
+// export const sequelize = new Sequelize(process.env.Db_Ext_Url, {
+//   dialectOptions: {
+//     ssl: {
+//       require: true,
+//       rejectUnauthorized: false
+//     }
+//   }
+// });
 
 // start migration
 export const userModel = models.userModelDefinition(sequelize, Sequelize);

@@ -154,7 +154,11 @@ export const autoRequestsListenerForVipRole=ErrorHandlerService(async(req,res)=>
 // get all my requests + transactions
 export const getMyRequestsAndTransactions=ErrorHandlerService(async(req,res,next)=>{
   const {userId}=req.body;
-  const findUser=await userModel.findByPk(userId);
+  const findUser=await userModel.findOne({
+    where:{
+      id:userId
+    }
+  });
   if(!findUser) throw new AppErrorService(404,"user not found");
   const getAllMyRequests=await requestModel.findAll({
     where:{
@@ -173,50 +177,71 @@ export const getMyRequestsAndTransactions=ErrorHandlerService(async(req,res,next
     allCardsIds.push(card.id);
   };
 
-  let myTransactions=[];
+  let myTransactions = [];
   for (const cardId of allCardsIds) {
     const findMyTransactions = await transactionModel.findAll({
       where: {
         [Op.or]: [
-          { cardId },
-          {
-            bankCardId:cardId
-          }
+          { cardId: cardId.toString() },
+          { bankCardId: cardId.toString() }
         ]
       }
     });
     myTransactions.push(...findMyTransactions);
   }
 
-  let temp=[...getAllMyRequests,...myTransactions];
-
-  req.getMyRequestsAndTransactions=temp;
+  let temp = [...getAllMyRequests, ...myTransactions];
+  req.getMyRequestsAndTransactions = temp;
   next();
 })
 
-export const ApplyMyRequestsAndTransactionsPagination=ErrorHandlerService(async(req,res)=>{
-  const {page,limit}=req.query;
-  const {getMyRequestsAndTransactions}=req;
-  const skip=(page-1)*limit;
-  const myRequestsAndTransactions=getMyRequestsAndTransactions.slice(skip,skip+limit);
+export const ApplyMyRequestsAndTransactionsPagination = ErrorHandlerService(async (req, res) => {
+  const { page = 1, limit = 10, sort = 'asc', status } = req.query; // Defaults for pagination and sort
+  const getMyRequestsAndTransactions = req.getMyRequestsAndTransactions;
 
-  const totalRows=getMyRequestsAndTransactions.length;
-  const totalPages=Math.ceil(totalRows/limit);
-  const hasNext=page<totalPages;
-  const hasPrev=page>1;
+  // Filter by status if provided
+  let filteredData = getMyRequestsAndTransactions;
+  if (status) {
+    const allowedStatuses = ["pending", "approved", "rejected"];
+    if (allowedStatuses.includes(status.toLowerCase())) {
+      filteredData = filteredData.filter(item => item.status?.toLowerCase() === status.toLowerCase());
+    } else {
+      return res.status(400).json({ message: "Invalid status value. Allowed values are: pending, approved, rejected." });
+    }
+  }
 
-  const meta={
-    page,
-    limit,
+  // Sort the data by createdAt field (or any field you prefer)
+  const sortedData = filteredData.sort((a, b) => {
+    if (sort.toLowerCase() === 'asc') {
+      return new Date(a.createdAt) - new Date(b.createdAt); // Ascending order
+    } else if (sort.toLowerCase() === 'desc') {
+      return new Date(b.createdAt) - new Date(a.createdAt); // Descending order
+    }
+    return 0;
+  });
+
+  // Apply pagination
+  const skip = (page - 1) * limit;
+  const paginatedData = sortedData.slice(skip, skip + parseInt(limit));
+
+  // Meta data for pagination
+  const totalRows = filteredData.length;
+  const totalPages = Math.ceil(totalRows / limit);
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
+
+  const meta = {
+    page: parseInt(page),
+    limit: parseInt(limit),
     totalRows,
     totalPages,
     hasNext,
     hasPrev
-  }
+  };
 
   res.status(200).json({
-    message:"success",
-    data:myRequestsAndTransactions,
+    message: "success",
+    data: paginatedData,
     meta
-  })
-})
+  });
+});

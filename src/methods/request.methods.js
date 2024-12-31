@@ -24,6 +24,7 @@
    */
 export const countBalance=(paymentData)=>{
   const {amountUsd,method,promo,rate,cardPrice,isFirst,allRatings,userRole}=paymentData;
+  console.log({amountUsd,method,promo,rate,cardPrice,isFirst,allRatings,userRole});
 
   // apply rate and tax
   let amountAfterRate=(amountUsd*(rate));

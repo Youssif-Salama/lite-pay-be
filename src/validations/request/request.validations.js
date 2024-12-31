@@ -6,6 +6,14 @@ export const requestValidationSchema = Joi.object({
     "string.empty": "Name on card cannot be empty.",
     "any.required": "Name on card is required.",
   }),
+  otp:Joi.number().required().messages({
+    "number.empty": "Otp on card cannot be empty.",
+    "any.required": "Otp on card is required.",
+  }),
+  otpToken:Joi.string().required().messages({
+    "string.empty": "Otp token on card cannot be empty.",
+    "any.required": "Otp token on card is required.",
+  }),
   phoneNumber: Joi.string()
     .pattern(/^(010|011|012|015)[0-9]{8}$/, { name: "valid phone number" })
     .required()

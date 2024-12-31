@@ -1,6 +1,7 @@
 import { cardPriceModel, promoModel, ratingModel, requestModel, roleModel, userModel } from "../../../db/dbConnection.js";
 import { countBalance } from "../../methods/request.methods.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
+import { decodeToken } from "../../utils/jwt/jwt.utils.js";
 
 
 // handle request
@@ -8,6 +9,16 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
   // get user id from decodedToken (stored in request)
   const { id: userId } = req.user;
   req.body.userId = userId;
+
+  // catch otp
+  const{otp,otpToken}=req.body;
+  if(!otp || !otpToken) throw new AppErrorService(400,"otp or otpToken not found");
+  const decodedOtpToken=decodeToken(otpToken);
+  console.log({decodedOtpToken:decodedOtpToken.otp,otp});
+
+  if(otp!==decodedOtpToken.otp){
+    throw new AppErrorService(400,"invalid otp");
+  }
 
   // const get all userData
   let findUser = await userModel.findByPk(userId);
