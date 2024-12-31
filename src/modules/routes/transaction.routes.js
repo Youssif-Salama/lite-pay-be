@@ -1,10 +1,11 @@
 import {Router} from "express";
 import { addNewDashboardTransaction, changeTransactionStatus, getAllTransactions, updateDashboardTransaction } from "../controllers/transactions.controllers.js";
 import { authentication } from "../../middlewares/auth.middlewares.js";
+import { paginationMiddleware } from "../../middlewares/features.middlewares.js";
 
 const transactionRouter=Router();
 // get all
-transactionRouter.get("/",authentication,getAllTransactions);
+transactionRouter.get("/",authentication,paginationMiddleware("transactionModel"),getAllTransactions);
 
 // add new Transaction
 transactionRouter.post("/",authentication,addNewDashboardTransaction);

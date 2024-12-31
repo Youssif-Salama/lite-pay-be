@@ -134,7 +134,7 @@ export const displayBankTransactionsInterval = (callback) => {
                 amount: amount,
                 transactionId: item?.id,
                 companyName: item?.counterpartyName,
-                avatar: avatar, // Include avatar in the transaction data
+                avatar: avatar,
                 date: item?.estimatedDeliveryDate,
                 time: item?.postedAt,
                 failureReason: item?.reasonForFailure,

@@ -1,6 +1,6 @@
 const fetchBrandData = async (counterpartyName) => {
   try {
-      const response = await fetch(`https://api.brandfetch.io/v2/search/${counterpartyName}`);
+      const response = await fetch(`https://api.brandfetch.io/v2/search/${counterpartyName.toString().toLowerCase().split(" ")[0]}`);
       const data = await response.json();
       const avatar = data.find(
           (brand) =>
