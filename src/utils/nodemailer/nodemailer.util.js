@@ -12,10 +12,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (email) => {
+export const sendEmail = async (email,otp) => {
   try {
-    const otp=generateOtp();
-    const geneRatedEmailToken=makeToken({email,otp});
+
     const mailOptions = {
       from: process.env.Email_User,
       to: email,
@@ -24,9 +23,8 @@ export const sendEmail = async (email) => {
       <div>
       <h1>Lite Pay</h1>
       <p> This email for reset password </p>
-      <p> Copy this otp, then click the link below to reset your password </p>
+      <p> Copy this otp </p>
       <p>${otp}</p>
-      <a href=${process.env.Frontend_Link+"/reset-password-do?emailToken="+geneRatedEmailToken}>Reset Password</a>
       </div>
       `
     };

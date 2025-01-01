@@ -48,3 +48,13 @@ export const login=ErrorHandlerService(async(req,res)=>{
   const token=makeToken({user:foundUser});
   res.status(200).json({message:"login success",token});
 })
+
+// validate otp
+export const validateOtp=ErrorHandlerService(async(req,res)=>{
+  const {otp,emailToken}=req.body;
+    const decodedEmailToken=decodeToken(emailToken);
+    if(otp===decodedEmailToken.otp){
+      throw new AppErrorService(400,"invalid otp");
+    }
+    res.status(200).json({message:"otp validated successfully"})
+})

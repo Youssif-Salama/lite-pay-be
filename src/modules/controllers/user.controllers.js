@@ -73,8 +73,10 @@ export const deleteUser=ErrorHandlerService(async(req,res)=>{
 export const forgotPasswordReq=ErrorHandlerService(async(req,res)=>{
   const {email}=req.body;
   if(!email) throw new AppErrorService(400,"email not found");
-  sendEmail(email);
-  res.status(200).json({message:"An Email has been sent to you to reset your password"});
+  const emailToken=makeToken({email,otp});
+  const otp=generateOtp();
+  sendEmail(email,otp);
+  res.status(200).json({message:"An Email has been sent to you to reset your password",emailToken});
 })
 
 
