@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import { cardModel, credentialModel, requestModel, roleModel, transactionModel, userModel } from "../../../db/dbConnection.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import { hashPassword } from "../../utils/bcrypt/bcrypt.utils.js";
-import { decodeToken } from "../../utils/jwt/jwt.utils.js";
+import { decodeToken, makeToken } from "../../utils/jwt/jwt.utils.js";
 import { sendEmail } from "../../utils/nodemailer/nodemailer.util.js";
 
 // used

@@ -9,7 +9,6 @@ export default (sequelize, DataTypes) => {
       },
       bankId: {
         type: DataTypes.STRING,
-        unique: true,
         allowNull: false,
       },
       cardNumber: {

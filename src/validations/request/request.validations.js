@@ -37,11 +37,7 @@ export const requestValidationSchema = Joi.object({
       "any.required": "Gender is required.",
     }),
     promo: Joi.string()
-    .required()
-    .messages({
-      "string.empty": "Promo cannot be empty.",
-      "any.required": "Promo is required.",
-    }),
+    .optional(),
   age: Joi.number()
     .integer()
     .min(1)

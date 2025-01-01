@@ -67,10 +67,10 @@ export default (sequelize,DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      // rate:{
-      //   type: DataTypes.FLOAT,
-      //   allowNull: false,
-      // },
+      rate:{
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
       status: {
         type: DataTypes.ENUM("pending",
           "success",

@@ -10,16 +10,6 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
   const { id: userId } = req.user;
   req.body.userId = userId;
 
-  // catch otp
-  const{otp,otpToken}=req.body;
-  if(!otp || !otpToken) throw new AppErrorService(400,"otp or otpToken not found");
-  const decodedOtpToken=decodeToken(otpToken);
-  console.log({decodedOtpToken:decodedOtpToken.otp,otp});
-
-  if(otp!==decodedOtpToken.otp){
-    throw new AppErrorService(400,"invalid otp");
-  }
-
   // const get all userData
   let findUser = await userModel.findByPk(userId);
   if (!findUser) throw new AppErrorService(400, "User not found");
@@ -48,7 +38,16 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
   // You can now use the variables: getPromos, cardPriceActive, getNormRating, etc.
 
 
-  if(findUser?.requests?.length===0 || !findUser?.requests){
+  if(findUser?.requests?.length==0 || !findUser?.requests){
+      // catch otp
+  const{otp,otpToken}=req.body;
+  if(!otp || !otpToken) throw new AppErrorService(400,"otp or otpToken not found");
+  const decodedOtpToken=decodeToken(otpToken);
+  console.log({decodedOtpToken:decodedOtpToken.otp,otp});
+
+  if(otp!==decodedOtpToken.otp){
+    throw new AppErrorService(400,"invalid otp");
+  }
       // make request for the first time (after send me token of otp+user and otp itself).
       // absolutely first time is for basic account (so i'll perform some math functions and equations here).
       const {amountInUsd,amountInEgp}=countBalance({
@@ -98,6 +97,7 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
     // pls check this part
     const lastUserRequestId=findUser?.requests?.[findUser?.requests?.length-1];
     const getRequest=await requestModel.findByPk(lastUserRequestId);
+
     if(!getRequest) throw new AppErrorService(404,"failed to get user last request");
     const {amountInUsd,amountInEgp}=countBalance({
       amountUsd,

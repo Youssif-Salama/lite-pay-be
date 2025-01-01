@@ -9,7 +9,7 @@ import { requestStatusMiddleware } from "../middlewares/request.middlewares.js";
 const requestRouter=Router();
 
 // post request
-requestRouter.post("/",authentication,validate(requestValidationSchema),addNewRequest);
+requestRouter.post("/",authentication,addNewRequest);
 
 // change status
 requestRouter.put("/:id",authentication,validate(changeRequestStatusValidationSchema),updateRequestStatus)
