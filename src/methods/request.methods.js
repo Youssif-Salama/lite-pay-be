@@ -24,7 +24,6 @@
    */
 export const countBalance=(paymentData)=>{
   const {amountUsd,method,promo,rate,cardPrice,isFirst,allRatings,userRole}=paymentData;
-  console.log({amountUsd,method,promo,rate,cardPrice,isFirst,allRatings,userRole});
 
   // apply rate and tax
   let amountAfterRate=(amountUsd*(rate));
@@ -81,9 +80,10 @@ export const countBalance=(paymentData)=>{
         return (valueBeforePromo-cardPromoValue);
       }
     }
-    else{}
+    else{
+      return valueBeforePromo;
+    }
   }
 
-  let lastTotal=ApplyPromo();
-  return {amountInUsd:(lastTotal/rate),amountInEgp:lastTotal};
+  return {amountInUsd:(Math.floor(lastTotal/rate)),amountInEgp:Math.ceil(lastTotal)};
 }
