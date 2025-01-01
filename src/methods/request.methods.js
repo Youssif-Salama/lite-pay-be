@@ -85,5 +85,6 @@ export const countBalance=(paymentData)=>{
     }
   }
 
+  let lastTotal=ApplyPromo();
   return {amountInUsd:(Math.floor(lastTotal/rate)),amountInEgp:Math.ceil(lastTotal)};
 }
