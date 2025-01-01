@@ -7,7 +7,7 @@ import { cardStatusMiddleware } from "../middlewares/card.middlewares.js";
 const cardRouter=Router({mergeParams:true});
 
 // get my cards
-cardRouter.get("/",authentication,sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","type","status","balance"]),cardStatusMiddleware,selectMiddleware(),includeMiddleware([
+cardRouter.get("/",authentication,sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),cardStatusMiddleware,selectMiddleware(),includeMiddleware([
   {
     model:"userModel",
     attributes:["email","id"]

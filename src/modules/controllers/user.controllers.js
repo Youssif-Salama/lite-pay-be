@@ -245,3 +245,12 @@ export const ApplyMyRequestsAndTransactionsPagination = ErrorHandlerService(asyn
     meta
   });
 });
+
+
+// get one user
+export const getOneUserData=ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  const findUser=await userModel.findByPk(id);
+  if(!findUser) throw new AppErrorService(404,"user not found");
+  res.status(200).json({message:"user fetched successfully",data:findUser});
+})

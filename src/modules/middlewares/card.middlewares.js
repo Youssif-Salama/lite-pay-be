@@ -6,7 +6,7 @@ export const cardStatusMiddleware=ErrorHandlerService(async(req,res,next)=>{
   if(!status) return next();
   req.dbQuery={
     ...req.dbQuery,
-    where:{status}
+    where:{"status":status}
   }
   next();
 })

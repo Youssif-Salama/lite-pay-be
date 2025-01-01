@@ -1,6 +1,6 @@
 import {Router} from "express";
 import { authentication } from "../../middlewares/auth.middlewares.js";
-import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword } from "../controllers/user.controllers.js";
+import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, getOneUserData, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword } from "../controllers/user.controllers.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { paginationMiddleware, populateMiddleware, selectMiddleware } from "../../middlewares/features.middlewares.js";
 import { roleModel } from "../../../db/dbConnection.js";
@@ -46,7 +46,10 @@ userRouter.post("/rating",authentication,validate(addUserRatingSchema),addSpecif
 userRouter.put("/change-role-auto",authentication,autoRequestsListenerForVipRole);
 
 // get all my raquests and transactions
-userRouter.get("/req-trans",authentication,getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsPagination);
+userRouter.post("/req-trans",authentication,getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsPagination);
+
+// get one user
+userRouter.get("/one/:id",authentication,getOneUserData);
 
 // use cards router
 userRouter. use("/:id/cards",cardRouter);
