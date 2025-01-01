@@ -4,6 +4,8 @@ import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandle
 import { hashPassword } from "../../utils/bcrypt/bcrypt.utils.js";
 import { decodeToken, makeToken } from "../../utils/jwt/jwt.utils.js";
 import { sendEmail } from "../../utils/nodemailer/nodemailer.util.js";
+import { generateOtp } from "../../services/Otp.services.js";
+
 
 // used
 export const deleteMyAccount=ErrorHandlerService(async(req,res)=>{
