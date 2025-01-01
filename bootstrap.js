@@ -49,7 +49,7 @@ const bootstrap = (app) => {
 
   fireDbConnection()
   .then(() => {
-    syncDb({force:true});
+    // syncDb({force:true});
     // syncDb({alter:true});
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
