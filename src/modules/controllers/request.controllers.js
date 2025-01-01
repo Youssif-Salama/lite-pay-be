@@ -53,7 +53,7 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
       const {amountInUsd,amountInEgp}=countBalance({
         amountUsd,
         method,
-        promo:getPromos,
+        promo:getPromos? getPromos : null,
         rate,
         cardPrice:cardPriceActive?.cardPrice,
         isFirst:true,
