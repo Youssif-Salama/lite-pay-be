@@ -213,18 +213,19 @@ export const ApplyMyRequestsAndTransactionsPagination = ErrorHandlerService(asyn
   if (status) {
     const allowedStatuses = ["pending", "approved", "rejected"];
     if (allowedStatuses.includes(status.toLowerCase())) {
+      const statusMap = {
+        approved: ["approved", "success"],
+        rejected: ["rejected", "failed"],
+      };
+
       filteredData = filteredData.filter(item => {
-        if(item.status?.toLowerCase() ==="approved"){
-         return item.status?.toLowerCase() === status.toLowerCase() || item.status?.toLowerCase() === "success"
-        }
-        else if(item.status?.toLowerCase() ==="rejected"){
-          return item.status?.toLowerCase() === status.toLowerCase() || item.status?.toLowerCase() === "failed"
-        }
-        else{
-          return item.status?.toLowerCase() === status.toLowerCase()
-        }
+        const itemStatus = item.status?.toLowerCase();
+        return statusMap[itemStatus]
+          ? statusMap[itemStatus].includes(status.toLowerCase())
+          : itemStatus === status.toLowerCase();
       });
-    } else {
+    }
+     else {
       return res.status(400).json({ message: "Invalid status value. Allowed values are: pending, approved, rejected." });
     }
   }
