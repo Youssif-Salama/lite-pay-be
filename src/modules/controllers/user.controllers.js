@@ -6,7 +6,6 @@ import { decodeToken, makeToken } from "../../utils/jwt/jwt.utils.js";
 import { sendEmail } from "../../utils/nodemailer/nodemailer.util.js";
 import { generateOtp } from "../../services/Otp.services.js";
 
-
 // used
 export const deleteMyAccount=ErrorHandlerService(async(req,res)=>{
   const {user}=req;
@@ -200,26 +199,41 @@ export const getMyRequestsAndTransactions=ErrorHandlerService(async(req,res,next
 })
 
 export const ApplyMyRequestsAndTransactionsPagination = ErrorHandlerService(async (req, res) => {
-  const { page = 1, limit = 10, sort = 'asc', status } = req.query; // Defaults for pagination and sort
+  const { page = 1, limit = 10, sort = 'asc', status,whatDate } = req.query;
   const getMyRequestsAndTransactions = req.getMyRequestsAndTransactions;
 
-  // Filter by status if provided
+  // apply date filter
   let filteredData = getMyRequestsAndTransactions;
+  if (whatDate && ["today", "lastWeek", "lastMonth"].includes(whatDate)) {
+    filteredData = filterByDateRange(whatDate, filteredData);
+  }
+
+  // Filter by status if provided
+  filteredData = getMyRequestsAndTransactions;
   if (status) {
     const allowedStatuses = ["pending", "approved", "rejected"];
     if (allowedStatuses.includes(status.toLowerCase())) {
-      filteredData = filteredData.filter(item => item.status?.toLowerCase() === status.toLowerCase());
+      filteredData = filteredData.filter(item => {
+        if(item.status?.toLowerCase() ==="approved"){
+         return item.status?.toLowerCase() === status.toLowerCase() || item.status?.toLowerCase() === "success"
+        }
+        else if(item.status?.toLowerCase() ==="rejected"){
+          return item.status?.toLowerCase() === status.toLowerCase() || item.status?.toLowerCase() === "failed"
+        }
+        else{
+          return item.status?.toLowerCase() === status.toLowerCase()
+        }
+      });
     } else {
       return res.status(400).json({ message: "Invalid status value. Allowed values are: pending, approved, rejected." });
     }
   }
 
-  // Sort the data by createdAt field (or any field you prefer)
   const sortedData = filteredData.sort((a, b) => {
     if (sort.toLowerCase() === 'asc') {
-      return new Date(a.createdAt) - new Date(b.createdAt); // Ascending order
+      return new Date(a.createdAt) - new Date(b.createdAt);
     } else if (sort.toLowerCase() === 'desc') {
-      return new Date(b.createdAt) - new Date(a.createdAt); // Descending order
+      return new Date(b.createdAt) - new Date(a.createdAt);
     }
     return 0;
   });

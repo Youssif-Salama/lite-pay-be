@@ -143,6 +143,7 @@ export const displayBankTransactionsInterval = (callback) => {
                 details: JSON.stringify({
                   details: item?.details,
                   relatedTransactions: item?.relatedTransactions,
+                  bankDescription: item?.bankDescription,
                 }),
                 status: itemStatus,
                 bankCreatedAt: item?.createdAt,
