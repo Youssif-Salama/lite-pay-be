@@ -78,7 +78,7 @@ export const forgotPasswordReq=ErrorHandlerService(async(req,res)=>{
   if(method=="phone" && phone){
     const result=await whatsAppSender("otpTemplate",[otp,otp],phone);
     if(!result) throw new AppErrorService(400,"failed to send otp");
-    const emailToken=makeToken({phoneNumber,otp});
+    const emailToken=makeToken({phoneNumber:phone,otp});
     res.status(200).json({message:"An Otp has been sent to you to reset your password",emailToken});
   }
   else if(method=="email" && email){
@@ -99,7 +99,13 @@ export const resetPasswordDo=ErrorHandlerService(async(req,res)=>{
   if(otp===decodedEmailToken.otp){
     throw new AppErrorService(400,"invalid otp");
   }
-  const findUser=await userModel.findOne({where:{email:decodedEmailToken.email}});
+  let findUser;
+  if(decodedEmailToken.email){
+    findUser=await userModel.findOne({where:{email:decodedEmailToken.email}});
+  }
+  if(decodedEmailToken.phoneNumber){
+    findUser=await userModel.findOne({where:{phone:decodedEmailToken.phoneNumber}});
+  }
   if(!findUser) throw new AppErrorService(400,"user not found, invalid token");
   const hashedPassword=hashPassword(password);
   const updatePassword=await credentialModel.update({password:hashedPassword},{where:{userId:findUser.id}});
