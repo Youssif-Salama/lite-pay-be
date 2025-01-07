@@ -7,7 +7,6 @@ export const addNewTransaction=(data)=>ErrorHandlerService(async(req,res)=>{
   if(data.length===0) throw new AppErrorService(400,"failed to add transaction");
   const addTransaction=await transactionModel.bulkCreate(data);
   if(!addTransaction) throw new AppErrorService(400,"failed to add transaction");
-  console.log("done");
   res.status(201).json({
     message:"transactions added successfully"
   })

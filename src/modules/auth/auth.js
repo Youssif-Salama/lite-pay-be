@@ -1,7 +1,7 @@
 import { credentialModel, roleModel, userModel } from "../../../db/dbConnection.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import { comparePassword, hashPassword } from "../../utils/bcrypt/bcrypt.utils.js";
-import { makeToken } from "../../utils/jwt/jwt.utils.js";
+import { decodeToken, makeToken } from "../../utils/jwt/jwt.utils.js";
 
 /*
   - signup auth controller
@@ -43,7 +43,6 @@ export const login=ErrorHandlerService(async(req,res)=>{
   const hashedPassword=userCredits[0].password;
   if(!hashedPassword) throw new AppErrorService(400,"failed to get user credentials");
   const isValidPassword=comparePassword(password,hashedPassword);
-  console.log({password,hashedPassword});
   if(!isValidPassword) throw new AppErrorService(400,"invalid password");
   const token=makeToken({user:foundUser});
   res.status(200).json({message:"login success",token});

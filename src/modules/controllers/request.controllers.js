@@ -43,7 +43,6 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
   const{otp,otpToken}=req.body;
   if(!otp || !otpToken) throw new AppErrorService(400,"otp or otpToken not found");
   const decodedOtpToken=decodeToken(otpToken);
-  console.log({decodedOtpToken:decodedOtpToken.otp,otp});
 
   if(otp!==decodedOtpToken.otp){
     throw new AppErrorService(400,"invalid otp");

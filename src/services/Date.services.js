@@ -15,8 +15,6 @@ export const DateService=(no)=>{
 
 
 export const checkDatesEquality=(date1,date2)=>{
-  console.log(date1,date2);
-  
   if(date1==date2) return true;
   else return false;
 }

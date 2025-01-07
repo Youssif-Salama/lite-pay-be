@@ -5,6 +5,7 @@ import { hashPassword } from "../../utils/bcrypt/bcrypt.utils.js";
 import { decodeToken, makeToken } from "../../utils/jwt/jwt.utils.js";
 import { sendEmail } from "../../utils/nodemailer/nodemailer.util.js";
 import { generateOtp } from "../../services/Otp.services.js";
+import whatsAppSender from "../../utils/whatsapp/whatsapp.util.js";
 
 // used
 export const deleteMyAccount=ErrorHandlerService(async(req,res)=>{
@@ -72,12 +73,22 @@ export const deleteUser=ErrorHandlerService(async(req,res)=>{
 
 // send requerst to reset password
 export const forgotPasswordReq=ErrorHandlerService(async(req,res)=>{
-  const {email}=req.body;
-  if(!email) throw new AppErrorService(400,"email not found");
+  const {email,phone,method}=req.body;
   const otp=generateOtp();
-  const emailToken=makeToken({email,otp});
-  sendEmail(email,otp);
-  res.status(200).json({message:"An Email has been sent to you to reset your password",emailToken});
+  if(method=="phone" && phone){
+    const result=await whatsAppSender("otpTemplate",[otp,otp],phone);
+    if(!result) throw new AppErrorService(400,"failed to send otp");
+    const emailToken=makeToken({phoneNumber,otp});
+    res.status(200).json({message:"An Otp has been sent to you to reset your password",emailToken});
+  }
+  else if(method=="email" && email){
+    sendEmail(email,otp);
+    const emailToken=makeToken({email,otp});
+    res.status(200).json({message:"An Email has been sent to you to reset your password",emailToken});
+  }
+  else{
+    throw new AppErrorService(400,"email or phone number is required");
+  }
 })
 
 
@@ -212,20 +223,19 @@ export const ApplyMyRequestsAndTransactionsPagination = ErrorHandlerService(asyn
   filteredData = getMyRequestsAndTransactions;
   if (status) {
     const allowedStatuses = ["pending", "approved", "rejected"];
-    if (allowedStatuses.includes(status.toLowerCase())) {
-      const statusMap = {
-        approved: ["approved", "success"],
-        rejected: ["rejected", "failed"],
-      };
 
-      filteredData = filteredData.filter(item => {
-        const itemStatus = item.status?.toLowerCase();
-        return statusMap[itemStatus]
-          ? statusMap[itemStatus].includes(status.toLowerCase())
-          : itemStatus === status.toLowerCase();
-      });
+if (allowedStatuses.includes(status.toLowerCase())) {
+  filteredData = filteredData.filter(item => {
+    const itemStatus = item.status?.toLowerCase();
+    if (status.toLowerCase() === "approved") {
+      return itemStatus === "approved" || itemStatus === "success";
+    } else if (status.toLowerCase() === "rejected") {
+      return itemStatus === "rejected" || itemStatus === "failed";
+    } else {
+      return itemStatus === status.toLowerCase();
     }
-     else {
+  });
+} else {
       return res.status(400).json({ message: "Invalid status value. Allowed values are: pending, approved, rejected." });
     }
   }

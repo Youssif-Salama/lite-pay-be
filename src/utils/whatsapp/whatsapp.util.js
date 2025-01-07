@@ -12,7 +12,6 @@ const whatsAppSender = async (templateName, variables, to) => {
     if (!template) {
       throw new Error("Invalid template name");
     }
-    console.log(JSON.stringify(template));
 
 
     const response = await fetch(url, {
