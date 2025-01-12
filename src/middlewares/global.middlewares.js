@@ -50,6 +50,7 @@ export const handleLogsMiddleware = (app) => {
     // Extract relevant info from the request and response
     const time = tokens["response-time"](req, res);
     const { method, url, headers, body, params, query } = req;
+    if(req.body?.password) req.body.password="***";
     const status = res.statusCode;
     const statusMessage = res.statusMessage;
     const message = res.trackedResJson; // The response body tracked by the custom json method
