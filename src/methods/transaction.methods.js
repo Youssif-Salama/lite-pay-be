@@ -112,6 +112,8 @@ export const displayBankTransactionsInterval = (callback) => {
         const filteredData = result
           .filter((item) => item?.details?.debitCardInfo?.id && item)
           .filter((item) => !existingTransactionIds.includes(item?.id));
+          
+        console.log(filteredData);
 
         if (filteredData.length > 0) {
           const arrangedData = await Promise.all(
@@ -164,6 +166,7 @@ export const displayBankTransactionsInterval = (callback) => {
     } finally {
       clearInterval(intervalId);
       intervalId = setInterval(pollTransactions, pollingInterval);
+      console.log("finish polling");
     }
   };
 
