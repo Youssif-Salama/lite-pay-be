@@ -13,7 +13,7 @@ export const requestStatusMiddleware=ErrorHandlerService(async(req,res,next)=>{
 
 
 // filter Req On Type
-export const filterReqOnType=()=>ErrorHandlerService(async(req,res,next)=>{
+export const filterReqOnType=ErrorHandlerService(async(req,res,next)=>{
   const {reqType}=req.query;
   if(!reqType) return next();
   req.dbQuery={
