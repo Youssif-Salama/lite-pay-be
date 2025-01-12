@@ -5,6 +5,7 @@ import { includeMiddleware, paginationMiddleware, searchMiddlware, selectMiddlew
 import { validate } from "../../middlewares/validation.middleware.js";
 import { changeRequestStatusValidationSchema, requestValidationSchema } from "../../validations/request/request.validations.js";
 import { requestStatusMiddleware } from "../middlewares/request.middlewares.js";
+import { dateRangeFilterMiddleware, situationFilterMiddleware } from "../../middlewares/global.middlewares.js";
 
 const requestRouter=Router();
 
@@ -26,7 +27,7 @@ requestRouter.get("/:id",authentication,selectMiddleware(),includeMiddleware([
 ]),getOneRequest);
 
 // get all requests
-requestRouter.get("/",authentication,sortingMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),requestStatusMiddleware,paginationMiddleware("requestModel"),selectMiddleware(),includeMiddleware([
+requestRouter.get("/",authentication,situationFilterMiddleware(["status","method"]),dateRangeFilterMiddleware,sortingMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),paginationMiddleware("requestModel"),selectMiddleware(),includeMiddleware([
   {
     model:"userModel",
     attributes:["email","id"]

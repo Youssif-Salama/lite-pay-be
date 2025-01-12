@@ -18,10 +18,11 @@ export const deleteMyAccount=ErrorHandlerService(async(req,res)=>{
 
 // used
 export const updateMyAccount=ErrorHandlerService(async(req,res)=>{
-  const {email,userName}=req.body;
+  const {email,username,age,gender,phoneNumber,telegram}=req.body;
   const {user}=req;
+
   if(!user) throw new AppErrorService(400,"user not found");
-  const updateUser=await userModel.update({email,userName},{where:{id:user.id}});
+  const updateUser=await userModel.update({email,username,age,gender,phoneNumber,telegram},{where:{id:user.id}});
   if(!updateUser) throw new AppErrorService(400,"failed to update user");
   res.status(200).json({message:"user updated successfully"})
 })
@@ -31,7 +32,7 @@ export const blockUser=ErrorHandlerService(async(req,res)=>{
   const {id}=req.params;
   if(!id) throw new AppErrorService(400,"user id not found");
   const blockUser=await userModel.update({status:"inactive"},{where:{id}});
-  if(!blockUser) throw new AppErrorService(400,"failed to block user");
+  if(!blockUser || blockUser[0]==0) throw new AppErrorService(400,"failed to block user or user not found");
   res.status(200).json({message:"user blocked successfully"})
 })
 
@@ -40,7 +41,7 @@ export const unBlockUser=ErrorHandlerService(async(req,res)=>{
   const {id}=req.params;
   if(!id) throw new AppErrorService(400,"user id not found");
   const unBlockUser=await userModel.update({status:"active"},{where:{id}});
-  if(!unBlockUser) throw new AppErrorService(400,"failed to unblock user");
+  if(!unBlockUser || unBlockUser[0]==0) throw new AppErrorService(400,"failed to unblock user or user not found");
   res.status(200).json({message:"user unblocked successfully"})
 })
 
@@ -57,7 +58,18 @@ export const updateMyPassword=ErrorHandlerService(async(req,res)=>{
 
 // used
 export const getAllUsers=ErrorHandlerService(async(req,res)=>{
-  const users=await userModel.findAll({...req.dbQuery})
+  if(req.query.role){
+    req.dbQuery={
+      ...req.dbQuery,
+      include:[
+        {
+          model:roleModel,
+          where:{type:req.query.role}
+        }
+      ]
+    }
+  }
+  const users=await userModel.findAll({...req.dbQuery,...req.filterQuery})
   if(!users) throw new AppErrorService(400,"failed to get users");
   res.status(200).json({message:"users fetched successfully",data:users,meta:req.meta});
 })
@@ -76,12 +88,16 @@ export const forgotPasswordReq=ErrorHandlerService(async(req,res)=>{
   const {email,phone,method}=req.body;
   const otp=generateOtp();
   if(method=="phone" && phone){
+    const findUser=await userModel.findOne({where:{phoneNumber:phone}});
+    if(!findUser) throw new AppErrorService(400,"user not found");
     const result=await whatsAppSender("otpTemplate",[otp,otp],phone);
     if(!result) throw new AppErrorService(400,"failed to send otp");
     const emailToken=makeToken({phoneNumber:phone,otp});
     res.status(200).json({message:"An Otp has been sent to you to reset your password",emailToken});
   }
   else if(method=="email" && email){
+    const findUser=await userModel.findOne({where:{email}});
+    if(!findUser) throw new AppErrorService(400,"user not found");
     sendEmail(email,otp);
     const emailToken=makeToken({email,otp});
     res.status(200).json({message:"An Email has been sent to you to reset your password",emailToken});
@@ -104,7 +120,7 @@ export const resetPasswordDo=ErrorHandlerService(async(req,res)=>{
     findUser=await userModel.findOne({where:{email:decodedEmailToken.email}});
   }
   if(decodedEmailToken.phoneNumber){
-    findUser=await userModel.findOne({where:{phone:decodedEmailToken.phoneNumber}});
+    findUser=await userModel.findOne({where:{phoneNumber:decodedEmailToken.phoneNumber}});
   }
   if(!findUser) throw new AppErrorService(400,"user not found, invalid token");
   const hashedPassword=hashPassword(password);
@@ -285,7 +301,11 @@ if (allowedStatuses.includes(status.toLowerCase())) {
 // get one user
 export const getOneUserData=ErrorHandlerService(async(req,res)=>{
   const {id}=req.params;
-  const findUser=await userModel.findByPk(id);
+  const findUser=await userModel.findByPk(id,{
+    include:[{
+      model:roleModel
+    }]
+  });
   if(!findUser) throw new AppErrorService(404,"user not found");
   res.status(200).json({message:"user fetched successfully",data:findUser});
 })

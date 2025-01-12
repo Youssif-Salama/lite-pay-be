@@ -31,15 +31,16 @@ export const transactionModel=models.transactionModelDefinition(sequelize,DataTy
 export const cardPriceModel=models.cardPriceModelDefination(sequelize,DataTypes);
 export const promoModel=models.promoModelDefination(sequelize,DataTypes);
 export const ratingModel=models.ratingModelDefination(sequelize,DataTypes);
+export const logsModel=models.logsModelDefination(sequelize,DataTypes);
 
-export const allModels = {userModel, roleModel, credentialModel,cardModel,requestModel,transactionModel,cardPriceModel,promoModel,ratingModel};
+export const allModels = {userModel, roleModel, credentialModel,cardModel,requestModel,transactionModel,cardPriceModel,promoModel,ratingModel,logsModel};
 // end migration
 
 
 // relations
-roleModel.hasMany(userModel, { foreignKey: 'roleId', as: 'users' });
-userModel.belongsTo(roleModel, { foreignKey: 'roleId', as: 'role' });
-userModel.hasOne(credentialModel, { foreignKey: 'userId',as:"credential" });
+roleModel.hasMany(userModel, { foreignKey: 'roleId' });
+userModel.belongsTo(roleModel, { foreignKey: 'roleId' });
+userModel.hasOne(credentialModel, { foreignKey: 'userId' });
 userModel.hasMany(cardModel,{foreignKey:"userId"});
 cardModel.belongsTo(userModel,{foreignKey:"userId"});
 userModel.hasMany(requestModel,{foreignKey:"userId"});
@@ -59,9 +60,9 @@ transactionModel.belongsTo(cardModel,{foreignKey:"cardId"});
  * If they do exist, it will attempt to alter them to match the current models.
  * @returns {Promise<void>}
  */
-export const syncDb = async () => {
+export const syncDb = async (options) => {
   try {
-    await sequelize.sync({ force: true });
+    await sequelize.sync(options);
     console.log("Database synced");
   } catch (error) {
     console.error("Error syncing database:", error);

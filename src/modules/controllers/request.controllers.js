@@ -26,7 +26,7 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
     getVipRating,
     findRole,
   ] = await Promise.all([
-    promoModel.findOne({ where: { promo } }),
+    promo && promoModel.findOne({ where: { promo } }),
     cardPriceModel.findOne({ where: { isActive: true } }),
     ratingModel.findOne({ where: { title: "norm" } }),
     ratingModel.findOne({ where: { title: "instapay" } }),
@@ -142,7 +142,7 @@ export const updateRequestStatus=ErrorHandlerService(async(req,res)=>{
   const updateRequest=await requestModel.update({status:req.body.status},{
     where:{id}
   });
-  if(!updateRequest) throw new AppErrorService(400,"failed to update request");
+  if(!updateRequest || updateRequest[0]==0) throw new AppErrorService(400,"failed to update request");
   res.status(200).json({
     message:`request status updated successfully to ${req.body.status}`,
     data:updateRequest
@@ -162,7 +162,17 @@ export const getOneRequest=ErrorHandlerService(async(req,res)=>{
 
 // get all request paginated
 export const getAllRequests=ErrorHandlerService(async(req,res)=>{
-  const findAll=await requestModel.findAll(req.dbQuery);
+  if(req.filterQuery){
+    Object.entries(req.filterQuery).forEach(([key,value])=>{
+      req.dbQuery.where={
+        ...req.dbQuery.where,
+        [key]:value
+      }
+    })
+  }
+  const findAll=await requestModel.findAll({
+    ...req.dbQuery
+  });
   if(!findAll) throw new AppErrorService(400,"failed to fetch all requests");
   res.status(200).json({
     message:"success",

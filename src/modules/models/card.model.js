@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       expiryDate: {
-        type: DataTypes.DATE,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       // type: {

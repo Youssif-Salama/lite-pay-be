@@ -6,6 +6,10 @@ export const updateUserValidationSchema = Joi.object({
     "string.empty":"email must not be empty",
     "string.email":"Invalid email format"
   }),
+  "age":Joi.string().optional(),
+  "gender":Joi.string().optional().valid("male", "female", "other"),
+  "phoneNumber":Joi.string().optional(),
+  "telegram":Joi.string().optional(),
   "username":Joi.string().optional()
   .messages({
     "string.empty":"username must not be empty",

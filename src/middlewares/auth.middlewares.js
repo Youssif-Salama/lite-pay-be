@@ -1,4 +1,5 @@
-import { userModel } from "../../db/dbConnection.js";
+import { Op } from "sequelize";
+import { roleModel, userModel } from "../../db/dbConnection.js";
 import { AppErrorService, ErrorHandlerService } from "../services/ErrorHandler.services.js";
 import { verifyToken } from "../utils/jwt/jwt.utils.js";
 
@@ -8,8 +9,16 @@ export const authentication=ErrorHandlerService(async(req,res,next)=>{
   if(!token) throw new AppErrorService(400,"token not found");
   const decodedToken=await verifyToken(token);
   if(!decodedToken) throw new AppErrorService(498,"invalid token");
-  const checkIfUserBlocked=await userModel.findOne({where:{id:decodedToken.user.id,status:"inactive"}});
-  if(checkIfUserBlocked) throw new AppErrorService(400,"user is blocked");
+  const checkIfUserBlocked = await userModel.findOne({
+    where: {
+      id: decodedToken.user.id,
+    },
+    include: {
+      model: roleModel
+    },
+  });
+
+  if(checkIfUserBlocked?.status==="inactive" || !checkIfUserBlocked?.Role || !checkIfUserBlocked || checkIfUserBlocked?.Role.status==="inactive") throw new AppErrorService(401,"user is blocked or failed to find role of user");
   req.user=decodedToken.user;
   next();
 });
@@ -22,9 +31,16 @@ export const authentication=ErrorHandlerService(async(req,res,next)=>{
  * @throws {AppErrorService} - Throws a 400 error if the user is not authenticated,
  *                             or a 403 error if the user is unauthorized.
  */
-export const authorization=(userRole)=>ErrorHandlerService(async(req,res,next)=>{
+export const authorization=(userRoles)=>ErrorHandlerService(async(req,res,next)=>{
   const {user}=req;
   if(!user) throw new AppErrorService(400,"user not found, not authenticated");
-  if(user.role.type!==userRole) throw new AppErrorService(403,"unauthorized");
-  next();
+  const findUser=await userModel.findByPk(user.id,{
+    include:{
+      model:roleModel
+    }
+  });
+ if (Array.from(userRoles).includes(findUser.Role.type)) next();
+  else{
+    throw new AppErrorService(403,`role of (${findUser.Role.type}) is not authorized`);
+  }
 });

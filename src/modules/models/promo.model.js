@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
       type:DataTypes.INTEGER,
       refrences:{
         model:"Users",
-        as:"id"
+        key:"id"
       }
     }
   },{timestamps:true});

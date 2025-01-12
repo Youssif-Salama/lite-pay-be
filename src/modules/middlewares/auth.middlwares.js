@@ -11,9 +11,8 @@ export const checkUserExistence =(forWhat)=>ErrorHandlerService(async(req,res,ne
   const findIfEmailExist=await userModel.findOne({
     where:{email},
     include:{
-      model:roleModel,
-      as:"role"
-    }
+      model:roleModel
+        }
   })
   if(forWhat==="signup" && findIfEmailExist) throw new AppErrorService(400,"user alread exist with this email");
   if(forWhat==="login" && !findIfEmailExist) throw new AppErrorService(400,"user does not exist with this email");

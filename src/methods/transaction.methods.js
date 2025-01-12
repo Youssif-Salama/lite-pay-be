@@ -141,7 +141,7 @@ export const displayBankTransactionsInterval = (callback) => {
                 category: item?.mercuryCategory,
                 bankCardId: item?.details?.debitCardInfo?.id,
                 details: JSON.stringify({
-                  details: item?.details,
+                  details: item,
                   relatedTransactions: item?.relatedTransactions,
                   bankDescription: item?.bankDescription,
                 }),
@@ -217,11 +217,21 @@ export const addNewTransaction = (data) =>
     if (!addTransaction)throw new AppErrorService(400, "Failed to add transactions");
 
     // Enqueue balance update jobs for each transaction
-  data.forEach((transaction) => {
+  data.forEach(async(transaction) => {
+    // before adding the card balance check if the transaction from bank is created befor user existence
+    const getCardDetails = await cardModel.findOne({
+      where: { cardId: transaction.cardId },
+      include: [
+        {
+          model: userModel,
+        }
+      ],
+    });
     // Adding each card balance update to the queue
-    queryQueue.add({ cardId: transaction.cardId, amount: transaction.amount });
+    if(new Date(getCardDetails?.user?.createdAt) < new Date(transaction.date)){
+      queryQueue.add({ cardId: transaction.cardId, amount: transaction.amount });
+    }
   });
-
     // applying quer queu to save the card new balance
     res.status(201).json({ message: "Transactions added successfully" });
   });
@@ -256,6 +266,7 @@ export const applyCardBalance=ErrorHandlerService(async(cardId,amount)=>{
   })
 
   if(!desiredCardFromLitepay) throw new AppErrorService(404,"card not found");
+  // before adding the card balance check if the transaction from bank is created befor user existence
   // save the new balance
   desiredCardFromLitepay.balance+=amount;
   await desiredCardFromLitepay.save();

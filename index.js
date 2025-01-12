@@ -4,9 +4,13 @@ env.config();
 import bootstrap from "./bootstrap.js";
 import { startPolling } from "./src/methods/transaction.methods.js";
 import { addNewTransaction } from "./src/modules/controllers/transactions.controllers.js";
+import { handleLogsMiddleware } from "./src/middlewares/global.middlewares.js";
 
 const app = express();
 app.use(express.json());
+// apply logs
+handleLogsMiddleware(app);
+
 
 // Start transaction polling
 startPolling((data) =>

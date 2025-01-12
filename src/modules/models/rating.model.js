@@ -2,7 +2,8 @@ export default (sequelize,DataTypes)=>{
   return sequelize.define("Rating",{
     title:{
       type:DataTypes.ENUM("instapay","vodafone","norm","vip"),
-      allowNull:false
+      allowNull:false,
+      unique:true
     },
     value:{
       type:DataTypes.FLOAT,
@@ -12,7 +13,7 @@ export default (sequelize,DataTypes)=>{
       type:DataTypes.INTEGER,
       refrences:{
         model:"Users",
-        as:"id"
+        key:"id"
       }
     }
   },{timestamps:true})

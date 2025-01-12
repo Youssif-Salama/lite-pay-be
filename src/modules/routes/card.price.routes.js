@@ -1,5 +1,5 @@
 import {Router} from "express";
-import { authentication } from "../../middlewares/auth.middlewares.js";
+import { authentication, authorization } from "../../middlewares/auth.middlewares.js";
 import { paginationMiddleware } from "../../middlewares/features.middlewares.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { cardPriceAddingValidationSchema, cardPriceUpdateValidationSchema } from "../../validations/cardPrice/card.price.validations.js";
@@ -8,21 +8,21 @@ import { activateCardPrice, addNewCardPrice, deleteAllCardPrices, deleteCardPric
 const cardPricRouter=Router();
 
 // get all
-cardPricRouter.get("/",authentication,paginationMiddleware("cardPriceModel"),getAllCardPrices);
+cardPricRouter.get("/",authentication,authorization(["owner","manager","staff"]),paginationMiddleware("cardPriceModel"),getAllCardPrices);
 
 // add new card price
-cardPricRouter.post("/",authentication,validate(cardPriceAddingValidationSchema),addNewCardPrice);
+cardPricRouter.post("/",authentication,authorization(["owner","manager"]),validate(cardPriceAddingValidationSchema),addNewCardPrice);
 
 // delete all
-cardPricRouter.delete("/",authentication,deleteAllCardPrices);
+cardPricRouter.delete("/",authentication,authorization(["owner","manager"]),deleteAllCardPrices);
 
 // delete one
-cardPricRouter.delete("/:id",authentication,deleteCardPrice);
+cardPricRouter.delete("/:id",authentication,authorization(["owner","manager"]),deleteCardPrice);
 
 // update
-cardPricRouter.put("/:id",authentication,validate(cardPriceUpdateValidationSchema),updateCardPrice);
+cardPricRouter.put("/:id",authentication,authorization(["owner","manager"]),validate(cardPriceUpdateValidationSchema),updateCardPrice);
 
 // activate
-cardPricRouter.put("/activate/:id",authentication,activateCardPrice)
+cardPricRouter.put("/activate/:id",authentication,authorization(["owner","manager"]),activateCardPrice)
 
 export default cardPricRouter;

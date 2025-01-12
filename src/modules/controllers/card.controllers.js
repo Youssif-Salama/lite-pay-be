@@ -1,4 +1,4 @@
-import { cardModel, requestModel, userModel } from "../../../db/dbConnection.js";
+import { cardModel, requestModel, roleModel, userModel } from "../../../db/dbConnection.js";
 import { checkDatesEquality, DateService } from "../../services/Date.services.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import env from "dotenv";
@@ -11,6 +11,7 @@ export const addNewCard=ErrorHandlerService(async(req,res)=>{
   const {requestId,cardNumber,cvv,type,cardBalance,expiryDate}=req.body;
 
   const isDateEqual=checkDatesEquality(expiryTestDate,expiryDate);
+
   if(!isDateEqual) throw new AppErrorService(400,"invalid expiry date");
 
   const findRequest=await requestModel.findByPk(requestId);
@@ -57,6 +58,30 @@ export const changeCardStatus=ErrorHandlerService(async(req,res)=>{
 
 // get all cards
 export const getAllCards=ErrorHandlerService(async(req,res)=>{
+  if(req.query.role){
+    req.dbQuery={
+      ...req.dbQuery,
+      include:[
+        {
+          model:userModel,
+          include:[
+            {
+              model:roleModel,
+              where:{type:req.query.role}
+            }
+          ]
+        }
+      ]
+    }
+  }
+  if(req.filterQuery){
+    Object.entries(req.filterQuery).forEach(([key,value])=>{
+      req.dbQuery.where={
+        ...req.dbQuery.where,
+        [key]:value
+      }
+    })
+  }
   const findAll=await cardModel.findAll(req.dbQuery);
   if(!findAll) throw new AppErrorService(400,"failed to fetch all cards");
   res.status(200).json({
@@ -65,6 +90,7 @@ export const getAllCards=ErrorHandlerService(async(req,res)=>{
     meta:req.meta
   })
 })
+
 
 // get all my cards merge params
 export const getMyCards=ErrorHandlerService(async(req,res)=>{
@@ -102,3 +128,12 @@ export const deleteCard=ErrorHandlerService(async(req,res)=>{
 })
 
 // update one card in dashboard
+export const updateCard=ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  const updateCard=await cardModel.update(req.body,{where:{id}});
+  if(!updateCard) throw new AppErrorService(400,"failed to update card");
+  res.status(200).json({
+    message:"card updated successfully",
+    data:updateCard
+  })
+})

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import env from 'dotenv';
+import { AppErrorService } from '../../services/ErrorHandler.services.js';
 
 env.config();
 
@@ -14,8 +15,7 @@ export const makeToken = (data) => {
     const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1d' });
     return token;
   } catch (error) {
-    console.error('Error generating token:', error);
-    throw new Error('Error generating token');
+    throw new AppErrorService(400,'Error generating token');
   }
 };
 
@@ -31,8 +31,7 @@ export const decodeToken = (token) => {
     const decodedToken = jwt.decode(token);
     return decodedToken;
   } catch (error) {
-    console.error('Error decoding token:', error);
-    throw new Error('Error decoding token');
+    throw new AppErrorService(400,'Error decoding token');
   }
 };
 
@@ -47,7 +46,7 @@ export const verifyToken = (token) => {
   return new Promise((resolve, reject) => {
     jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
       if (error) {
-        return reject('Token verification failed');
+        throw new AppErrorService(498,'Token verification failed');
       }
       resolve(decoded);
     });

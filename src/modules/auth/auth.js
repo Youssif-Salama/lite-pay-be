@@ -12,8 +12,9 @@ export const signup=ErrorHandlerService(async(req,res)=>{
   const hashedPassword=hashPassword(password);
 
   // find the user role
-  const findUserRole=await roleModel.findOne({type:"user"});
-  if(!findUserRole) throw new AppErrorService(400,"failed to find user role");
+  const findUserRole=await roleModel.findAll({where:{type:"user"}});
+
+  if(!findUserRole || findUserRole.length===0) throw new AppErrorService(400,"failed to find user role");
 
   // save email
   const saveEmailToUserModel=await userModel.create({email,roleId:findUserRole.id});
