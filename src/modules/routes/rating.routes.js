@@ -8,7 +8,7 @@ import { addNewRating, deleteAllrating, deleteRating, getAllRatings, updateRatin
 const ratingRouter=Router();
 
 // get all
-ratingRouter.get("/",authentication,authorization(["owner","manager","staff"]),paginationMiddleware("ratingModel"),getAllRatings);
+ratingRouter.get("/",authentication,authorization(["owner","manager","staff","vip","basic"]),paginationMiddleware("ratingModel"),getAllRatings);
 
 // add new promo
 ratingRouter.post("/",authentication,authorization(["owner","manager"]),validate(addRatingValidationSchema),addNewRating);
