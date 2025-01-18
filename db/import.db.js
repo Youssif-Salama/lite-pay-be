@@ -7,8 +7,7 @@ import transactionModelDefinition from "../src/modules/models/transaction.model.
 import cardPriceModelDefination from "../src/modules/models/card.price.model.js";
 import promoModelDefination from "../src/modules/models/promo.model.js";
 import ratingModelDefination from "../src/modules/models/rating.model.js";
-import logsModelDefination from "../src/modules/models/logs.model.js";
 
 export {userModelDefinition,credentialModelDefinition,roleModelDefinition,cardModelDefination,requestModelDefinition,transactionModelDefinition,
-  cardPriceModelDefination,promoModelDefination,ratingModelDefination,logsModelDefination
+  cardPriceModelDefination,promoModelDefination,ratingModelDefination
 };

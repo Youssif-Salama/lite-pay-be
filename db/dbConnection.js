@@ -31,9 +31,8 @@ export const transactionModel=models.transactionModelDefinition(sequelize,DataTy
 export const cardPriceModel=models.cardPriceModelDefination(sequelize,DataTypes);
 export const promoModel=models.promoModelDefination(sequelize,DataTypes);
 export const ratingModel=models.ratingModelDefination(sequelize,DataTypes);
-export const logsModel=models.logsModelDefination(sequelize,DataTypes);
 
-export const allModels = {userModel, roleModel, credentialModel,cardModel,requestModel,transactionModel,cardPriceModel,promoModel,ratingModel,logsModel};
+export const allModels = {userModel, roleModel, credentialModel,cardModel,requestModel,transactionModel,cardPriceModel,promoModel,ratingModel};
 // end migration
 
 

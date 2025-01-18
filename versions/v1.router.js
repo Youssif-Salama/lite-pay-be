@@ -9,6 +9,7 @@ import promoRouter from "../src/modules/routes/promo.routes.js";
 import cardPricRouter from "../src/modules/routes/card.price.routes.js";
 import transactionRouter from "../src/modules/routes/transaction.routes.js";
 import ratingRouter from "../src/modules/routes/rating.routes.js";
+import logRoutes from "../src/modules/routes/logs.routes.js";
 
 const v1Router = Router();
 
@@ -22,6 +23,6 @@ v1Router.use("/bank",bankCardsRouter);
 v1Router.use("/card-price",cardPricRouter);
 v1Router.use("/transactions",transactionRouter);
 v1Router.use("/ratings",ratingRouter);
-
+v1Router.use("/logs",logRoutes);
 
 export default v1Router;
