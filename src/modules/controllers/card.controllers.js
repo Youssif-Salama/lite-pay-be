@@ -1,7 +1,8 @@
-import { cardModel, requestModel, roleModel, userModel } from "../../../db/dbConnection.js";
+import { cardModel, requestModel, roleModel, transactionModel, userModel } from "../../../db/dbConnection.js";
 import { checkDatesEquality, DateService } from "../../services/Date.services.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import env from "dotenv";
+import { decodeToken } from "../../utils/jwt/jwt.utils.js";
 env.config();
 
 // add new card
@@ -94,7 +95,9 @@ export const getAllCards=ErrorHandlerService(async(req,res)=>{
 
 // get all my cards merge params
 export const getMyCards=ErrorHandlerService(async(req,res)=>{
-  const {id:userId}=req.params;
+  const token=req.headers.token;
+  const decodedToken=decodeToken(token);
+  const userId=decodedToken.user.id;
   req.dbQuery={
     ...req.dbQuery,
     where:{userId}
@@ -135,5 +138,63 @@ export const updateCard=ErrorHandlerService(async(req,res)=>{
   res.status(200).json({
     message:"card updated successfully",
     data:updateCard
+  })
+})
+
+// delete user cards
+export const deleteSpecificUserCards=ErrorHandlerService(async(req,res)=>{
+  const {id:userId}=req.params;
+  const deleteCards=await cardModel.destroy({where:{userId}});
+  if(!deleteCards && deleteCards!==0) throw new AppErrorService(400,"failed to delete cards");
+  res.status(200).json({
+    message:"cards deleted successfully"
+  })
+})
+
+// get user cards
+export const getSpecificUserCards=ErrorHandlerService(async(req,res)=>{
+  const {id:userId}=req.params;
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{userId}
+  }
+  const findAll=await cardModel.findAll(req.dbQuery);
+  if(!findAll) throw new AppErrorService(400,"failed to fetch all cards");
+  res.status(200).json({
+    message:"success",
+    data:findAll,
+    meta:req.meta
+  })
+})
+
+// get card transactions
+export const getSpecificCardTransactions= ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{cardId:id}
+  }
+  const findAll=await transactionModel.findAll(req.dbQuery);
+  if(!findAll) throw new AppErrorService(400,"failed to fetch all transactions");
+  res.status(200).json({
+    message:"success",
+    data:findAll,
+    meta:req.meta
+  })
+})
+
+// get card requests
+export const getSpecificCardRequests=ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{cardId:id}
+  }
+  const findAll=await requestModel.findAll(req.dbQuery);
+  if(!findAll) throw new AppErrorService(400,"failed to fetch all transactions");
+  res.status(200).json({
+    message:"success",
+    data:findAll,
+    meta:req.meta
   })
 })

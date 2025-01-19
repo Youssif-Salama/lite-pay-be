@@ -152,7 +152,9 @@ export const updateRequestStatus=ErrorHandlerService(async(req,res)=>{
 // get one request by pk (id)
 export const getOneRequest=ErrorHandlerService(async(req,res)=>{
   const {id}=req.params;
-  const findRequest=await requestModel.findByPk(id);
+  const findRequest=await requestModel.findAll({
+    where:{id}
+  });
   if(!findRequest) throw new AppErrorService(400,"failed to get request");
   res.status(200).json({
     message:"success",
@@ -178,5 +180,48 @@ export const getAllRequests=ErrorHandlerService(async(req,res)=>{
     message:"success",
     data:findAll,
     meta:req.meta
+  })
+})
+
+// get myRequest
+export const getMyRequests=ErrorHandlerService(async(req,res)=>{
+  const {token}=req.headers;
+  const decodedToken=decodeToken(token);
+  const userId=decodedToken?.user?.id;
+  const getUserAllRequets=await requestModel.findAll({
+    where:{userId}
+  });
+  if(!getUserAllRequets) throw new AppErrorService(400,"failed to fetch all requests");
+  res.status(200).json({
+    message:"success",
+    data:getUserAllRequets,
+    meta:req.meta
+  })
+})
+
+
+// get user requests
+export const getSpecificUserRequests=ErrorHandlerService(async(req,res)=>{
+  const {id:userId}=req.params;
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{userId}
+  }
+  const findAll=await requestModel.findAll(req.dbQuery);
+  if(!findAll) throw new AppErrorService(400,"failed to fetch all requests");
+  res.status(200).json({
+    message:"success",
+    data:findAll,
+    meta:req.meta
+  })
+})
+
+// delete user request
+export const deleteSpecificUserRequests=ErrorHandlerService(async(req,res)=>{
+  const {id:userId}=req.params;
+  const deleteRequests=await requestModel.destroy({where:{userId}});
+  if(!deleteRequests && deleteRequests!==0) throw new AppErrorService(400,"failed to delete requests");
+  res.status(200).json({
+    message:"requests deleted successfully"
   })
 })

@@ -27,6 +27,16 @@ export const updateMyAccount=ErrorHandlerService(async(req,res)=>{
   res.status(200).json({message:"user updated successfully"})
 })
 
+// update onse user
+export const updateOneUserRating=ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  const {rating}=req.body;
+  if(!id) throw new AppErrorService(400,"user id not found");
+  const updateUser=await userModel.update({rating},{where:{id}});
+  if(!updateUser) throw new AppErrorService(400,"failed to update user");
+  res.status(200).json({message:"user updated successfully"})
+})
+
 // used
 export const blockUser=ErrorHandlerService(async(req,res)=>{
   const {id}=req.params;
@@ -304,8 +314,18 @@ export const getOneUserData=ErrorHandlerService(async(req,res)=>{
   const findUser=await userModel.findByPk(id,{
     include:[{
       model:roleModel
+    },{
+      model:cardModel
     }]
   });
   if(!findUser) throw new AppErrorService(404,"user not found");
   res.status(200).json({message:"user fetched successfully",data:findUser});
+})
+
+
+export const deleteOneUser=ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  const deletedUser=await userModel.destroy({where:{id}});
+  if(!deletedUser) throw new AppErrorService(400,"failed to delete user");
+  res.status(200).json({message:"user deleted successfully"})
 })

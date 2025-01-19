@@ -1,12 +1,14 @@
 import {Router} from "express";
 import { authentication, authorization } from "../../middlewares/auth.middlewares.js";
-import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, getOneUserData, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword } from "../controllers/user.controllers.js";
+import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, deleteOneUser, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, getOneUserData, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword, updateOneUserRating } from "../controllers/user.controllers.js";
 import { validate } from "../../middlewares/validation.middleware.js";
-import { includeMiddleware, paginationMiddleware, populateMiddleware, selectMiddleware } from "../../middlewares/features.middlewares.js";
+import { includeMiddleware, paginationMiddleware, populateMiddleware, searchMiddlware, selectMiddleware } from "../../middlewares/features.middlewares.js";
 import { roleModel } from "../../../db/dbConnection.js";
 import { addUserRatingSchema, changeRoleAutoSchema, changeUserRoleSchema, updateUserValidationSchema } from "../../validations/user/user.validations.js";
 import cardRouter from "./card.routes.js";
 import { dateRangeFilterMiddleware } from "../../middlewares/global.middlewares.js";
+import requestRouter from "./request.routes.js";
+import transactionRouter from "./transaction.routes.js";
 
 
 
@@ -15,7 +17,7 @@ const userRouter=Router();
 // userRouter.get("/",authentication,dateRangeFilterMiddleware,paginationMiddleware("userModel"),selectMiddleware(),populateMiddleware('[{"model": "Role", "attributes": ["id", "name","type"]}]',roleModel,"role","one"),getAllUsers);
 
 // get all users
-userRouter.get("/",authentication,authorization(["manager","owner","staff"]),dateRangeFilterMiddleware,paginationMiddleware("userModel"),selectMiddleware(),includeMiddleware([
+userRouter.get("/",authentication,authorization(["manager","owner","staff"]),dateRangeFilterMiddleware,selectMiddleware(),searchMiddlware(["email","name","phoneNumber","telegram"]),includeMiddleware([
   {
     model:"roleModel",
     attributes:["type","name","id"]
@@ -23,7 +25,7 @@ userRouter.get("/",authentication,authorization(["manager","owner","staff"]),dat
   {
     model:"cardModel",
   }
-]),getAllUsers);
+]),paginationMiddleware("userModel"),getAllUsers);
 
 
 //delete my account
@@ -31,6 +33,9 @@ userRouter.delete("/delete",authentication,authorization(["basic","vip"]),delete
 
 //update my account
 userRouter.put("/update",authentication,authorization(["basic","vip","staff","manager","owner"]),validate(updateUserValidationSchema),updateMyAccount);
+
+// change user rating
+userRouter.put("/rating/:id",authentication,authorization(["manager","owner","staff"]),updateOneUserRating);
 
 // block user
 userRouter.put("/block/:id",authentication,authorization(["manager","owner"]),blockUser);
@@ -63,7 +68,16 @@ userRouter.post("/req-trans",authentication,authorization(["basic","vip","staff"
 // get one user
 userRouter.get("/one/:id",authentication,authorization(["basic","vip","staff","manager","owner"]),getOneUserData);
 
+// delete one user
+userRouter.delete("/:id",authentication,authorization(["manager","owner"]),deleteOneUser);
+
 // use cards router
 userRouter. use("/:id/cards",cardRouter);
+
+// user requests router
+userRouter.use("/:id/requests",requestRouter);
+
+// user transactions router
+userRouter.use("/:id/transactions",transactionRouter);
 
 export default userRouter;

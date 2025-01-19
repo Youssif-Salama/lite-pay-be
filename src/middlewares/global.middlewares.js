@@ -58,11 +58,12 @@ export const handleLogsMiddleware = (app) => {
     morgan(async (tokens, req, res) => {
       // Extract relevant info from the request and response
       const time = tokens["response-time"](req, res);
-      const { method, url, headers, body, params, query } = req;
+      const { method, originalUrl:url, headers, body, params, query } = req;
+
       if (req.body?.password) req.body.password = "***";
       const status = res.statusCode;
       const statusMessage = res.statusMessage;
-      const message = res.trackedResJson;
+      const message = res.trackedResJson?.message;
 
       // Arranging log details
       const arrangedLog = {

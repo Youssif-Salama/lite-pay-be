@@ -1,6 +1,8 @@
+import { Op } from "sequelize";
 import { cardModel, transactionModel } from "../../../db/dbConnection.js";
 import { applyCardBalance } from "../../methods/transaction.methods.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
+import { decodeToken } from "../../utils/jwt/jwt.utils.js";
 
 // add new transaction on bank pulling
 export const addNewTransaction=(data)=>ErrorHandlerService(async(req,res)=>{
@@ -64,5 +66,87 @@ export const changeTransactionStatus=ErrorHandlerService(async(req,res)=>{
   if(!updateTransaction) throw new AppErrorService(400,"failed to update transaction");
   res.status(201).json({
     message:"transaction status updated successfully"
+  })
+})
+
+
+export const getMyTransactions=ErrorHandlerService(async(req,res)=>{
+  const token=req.headers.token;
+  const decodedToken=decodeToken(token);
+  const userId=decodedToken.user.id;
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{userId}
+  }
+  const findUserCards=await cardModel.findAll({
+    where:{userId}
+  });
+  if(!findUserCards) throw new AppErrorService(400,"failed to get cards");
+  const allCardsIds=[];
+  for(const card of findUserCards){
+    allCardsIds.push(card.id);
+  };
+  const findMyTransactions=await transactionModel.findAll({
+    where:{
+      [Op.or]:[
+        {cardId:allCardsIds}
+      ]
+    }
+  });
+  if(!findMyTransactions) throw new AppErrorService(400,"failed to get transactions");
+  res.status(200).json({
+    message:"success",
+    data:findMyTransactions,
+    meta:req.meta
+  })
+})
+
+export const getUserTransactions=ErrorHandlerService(async(req,res)=>{
+  const {id:userId}=req.params;
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{userId}
+  }
+  const findUserCards=await cardModel.findAll({
+    where:{userId}
+  });
+  console.log({findUserCards});
+
+  if(!findUserCards) throw new AppErrorService(400,"failed to get cards");
+  const allCardsIds=[];
+  for(const card of findUserCards){
+    allCardsIds.push(card.id);
+  };
+  const findUserTransactions=await transactionModel.findAll({
+    where:{cardId:allCardsIds}
+  });
+  if(!findUserTransactions) throw new AppErrorService(400,"failed to get transactions");
+  res.status(200).json({
+    message:"success",
+    data:findUserTransactions,
+    meta:req.meta
+  })
+})
+
+export const deleteSpecificUserTransactions=ErrorHandlerService(async(req,res)=>{
+  const {id:userId}=req.params;
+  const getUserCards=await cardModel.findAll({
+    where:{userId}
+  })
+  if(!getUserCards) throw new AppErrorService(400,"failed to get cards");
+  const allCardsIds=[];
+  for(const card of getUserCards){
+    allCardsIds.push(card.id);
+  };
+  const deleteTransactions=await transactionModel.destroy({
+    where:{cardId:{
+      [Op.in]:allCardsIds
+    }}
+  });
+  console.log({deleteTransactions});
+
+  if(!deleteTransactions && deleteTransactions!==0) throw new AppErrorService(400,"failed to delete transactions");
+  res.status(200).json({
+    message:"transactions deleted successfully"
   })
 })
