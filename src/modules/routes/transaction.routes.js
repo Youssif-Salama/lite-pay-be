@@ -12,7 +12,7 @@ transactionRouter.get("/",authentication,authorization(["owner","manager","staff
 transactionRouter.post("/",authentication,authorization(["owner","manager","staff"]),addNewDashboardTransaction);
 
 // get my transactions
-transactionRouter.get("/mine",authentication,authorization(["basic","vip","staff","manager","owner"]),sortingMiddleware(),filterTransactionOnType,paginationMiddleware("transactionModel"),getMyTransactions);
+transactionRouter.get("/mine",authentication,authorization(["user","vip","staff","manager","owner"]),sortingMiddleware(),filterTransactionOnType,paginationMiddleware("transactionModel"),getMyTransactions);
 
 // get user transactions
 transactionRouter.get("/specific",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),filterTransactionOnType,paginationMiddleware("transactionModel"),getUserTransactions);

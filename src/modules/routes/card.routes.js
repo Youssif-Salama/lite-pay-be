@@ -13,7 +13,7 @@ import { filterTransactionOnType } from "../middlewares/transaction.middlewares.
 const cardRouter=Router({mergeParams:true});
 
 // get my cards
-cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","vip","basic"]),sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),cardStatusMiddleware,includeMiddleware([
+cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","vip","user"]),sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),cardStatusMiddleware,includeMiddleware([
   {
     model:"userModel",
     attributes:["email","id"]

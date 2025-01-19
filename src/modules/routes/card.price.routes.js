@@ -8,7 +8,7 @@ import { activateCardPrice, addNewCardPrice, deleteAllCardPrices, deleteCardPric
 const cardPricRouter=Router();
 
 // get all
-cardPricRouter.get("/",authentication,authorization(["owner","manager","staff","vip","basic"]),paginationMiddleware("cardPriceModel"),getAllCardPrices);
+cardPricRouter.get("/",authentication,authorization(["owner","manager","staff","vip","user"]),paginationMiddleware("cardPriceModel"),getAllCardPrices);
 
 // add new card price
 cardPricRouter.post("/",authentication,authorization(["owner","manager"]),validate(cardPriceAddingValidationSchema),addNewCardPrice);

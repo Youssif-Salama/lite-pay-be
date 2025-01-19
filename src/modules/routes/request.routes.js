@@ -14,7 +14,7 @@ requestRouter.post("/",authentication,addNewRequest);
 
 
 // get my requests
-requestRouter.get("/mine",authentication,authorization(["basic","vip","staff","manager","owner"]),searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),requestStatusMiddleware,filterReqOnType,sortingMiddleware(),paginationMiddleware("requestModel"),getMyRequests);
+requestRouter.get("/mine",authentication,authorization(["user","vip","staff","manager","owner"]),searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),requestStatusMiddleware,filterReqOnType,sortingMiddleware(),paginationMiddleware("requestModel"),getMyRequests);
 
 
 // get all requests

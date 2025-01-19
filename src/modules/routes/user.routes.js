@@ -29,10 +29,10 @@ userRouter.get("/",authentication,authorization(["manager","owner","staff"]),dat
 
 
 //delete my account
-userRouter.delete("/delete",authentication,authorization(["basic","vip"]),deleteMyAccount);
+userRouter.delete("/delete",authentication,authorization(["user","vip"]),deleteMyAccount);
 
 //update my account
-userRouter.put("/update",authentication,authorization(["basic","vip","staff","manager","owner"]),validate(updateUserValidationSchema),updateMyAccount);
+userRouter.put("/update",authentication,authorization(["user","vip","staff","manager","owner"]),validate(updateUserValidationSchema),updateMyAccount);
 
 // change user rating
 userRouter.put("/rating/:id",authentication,authorization(["manager","owner","staff"]),updateOneUserRating);
@@ -44,7 +44,7 @@ userRouter.put("/block/:id",authentication,authorization(["manager","owner"]),bl
 userRouter.put("/unblock/:id",authentication,authorization(["manager","owner"]),unBlockUser);
 
 // update my password
-userRouter.put("/update-password",authentication,authorization(["basic","vip"]),validate(updateUserValidationSchema),updateMyPassword);
+userRouter.put("/update-password",authentication,authorization(["user","vip"]),validate(updateUserValidationSchema),updateMyPassword);
 
 // reset password req
 userRouter.post("/reset-password-req",forgotPasswordReq);
@@ -60,13 +60,13 @@ userRouter.put("/change-role",authentication,authorization(["manager","owner"]),
 userRouter.post("/rating",authentication,authorization(["manager","owner","staff"]),validate(addUserRatingSchema),addSpecificUserRating)
 
 // auto role changer
-userRouter.put("/change-role-auto",authentication,authorization(["manager","owner","staff","vip","basic"]),autoRequestsListenerForVipRole);
+userRouter.put("/change-role-auto",authentication,authorization(["manager","owner","staff","vip","user"]),autoRequestsListenerForVipRole);
 
 // get all my raquests and transactions
-userRouter.post("/req-trans",authentication,authorization(["basic","vip","staff","manager","owner"]),getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsPagination);
+userRouter.post("/req-trans",authentication,authorization(["user","vip","staff","manager","owner"]),getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsPagination);
 
 // get one user
-userRouter.get("/one/:id",authentication,authorization(["basic","vip","staff","manager","owner"]),getOneUserData);
+userRouter.get("/one/:id",authentication,authorization(["user","vip","staff","manager","owner"]),getOneUserData);
 
 // delete one user
 userRouter.delete("/:id",authentication,authorization(["manager","owner"]),deleteOneUser);
