@@ -68,18 +68,7 @@ export const updateMyPassword=ErrorHandlerService(async(req,res)=>{
 
 // used
 export const getAllUsers=ErrorHandlerService(async(req,res)=>{
-  if(req.query.role){
-    req.dbQuery={
-      ...req.dbQuery,
-      include:[
-        {
-          model:roleModel,
-          where:{type:req.query.role}
-        }
-      ]
-    }
-  }
-  const users=await userModel.findAll({...req.dbQuery,...req.filterQuery})
+  const users=await userModel.findAll({...req.dbQuery})
   if(!users) throw new AppErrorService(400,"failed to get users");
   res.status(200).json({message:"users fetched successfully",data:users,meta:req.meta});
 })

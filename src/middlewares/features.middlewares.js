@@ -1,4 +1,4 @@
-import { Op, where } from 'sequelize';
+import { Op, Sequelize, where } from 'sequelize';
 import { allModels as models } from '../../db/dbConnection.js';
 import { AppErrorService, ErrorHandlerService } from '../services/ErrorHandler.services.js';
 /**
@@ -26,7 +26,8 @@ export const paginationMiddleware = (model) => {
       let totalRows;
       if(req.dbQuery){
         totalRows= await models[model].count({
-          where: req.dbQuery.where,
+          where: req.dbQuery.where || {},
+          include: req.dbQuery.include
         })
       }
       else{
@@ -133,17 +134,36 @@ export const includeMiddleware = (includes) =>
   export const searchMiddlware=(searchKeys)=>ErrorHandlerService(async(req,res,next)=>{
     const {searchWord}=req.query;
     if(!searchWord) return next();
-    const searchCriteria=searchKeys.map(key=>{
-      return {
-        [key]:{
-          [Op.like]:`%${searchWord}%`
-        }
-      }
-    })
+    const searchCriteria = searchKeys.map((key) => {
+      return Sequelize.where(
+        Sequelize.cast(Sequelize.col(key), 'TEXT'),
+        { [Op.iLike]: `%${searchWord}%` }
+      );
+    });
+
     req.dbQuery={
       ...req.dbQuery,
       where:{
+        ...(req.dbQuery.where || {}),
         [Op.or]:searchCriteria
+      }
+    }
+    next();
+  })
+
+
+  export const dateRangeFilterMiddleware=()=>ErrorHandlerService(async(req,res,next)=>{
+    const {startDate,endDate}=req.query;
+    if(!startDate || !endDate) return next();
+    const startDateObj=new Date(startDate);
+    const endDateObj=new Date(endDate);
+    req.dbQuery={
+      ...req.dbQuery,
+      where:{
+        ...(req.dbQuery.where || {}),
+        createdAt:{
+          [Op.between]:[startDateObj,endDateObj]
+        }
       }
     }
     next();

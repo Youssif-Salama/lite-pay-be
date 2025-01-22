@@ -19,7 +19,7 @@ export const cardValidationSchema = Joi.object({
     "string.min":"cvv cannot be less than 3 characters"
   }),
   type: Joi.string().optional(),
-  cardBalance: Joi.number().precision(2).min(0).required().messages({
+  cardBalance: Joi.number().min(0).required().messages({
     "string.empty":"balance cannot be empty"
   }),
   expiryDate:Joi.string().required().pattern(/^(0[1-9]|1[0-2])\/\d{2}$/).messages({
@@ -47,7 +47,7 @@ export const cardValidationSchemaPut = Joi.object({
     "string.min": "cvv cannot be less than 3 characters"
   }),
   type: Joi.string().optional(),
-  cardBalance: Joi.number().precision(2).min(0).optional().messages({
+  balance: Joi.number().min(0).optional().messages({
     "string.empty": "balance cannot be empty"
   }),
   expiryDate: Joi.string()

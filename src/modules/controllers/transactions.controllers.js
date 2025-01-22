@@ -3,6 +3,7 @@ import { cardModel, transactionModel } from "../../../db/dbConnection.js";
 import { applyCardBalance } from "../../methods/transaction.methods.js";
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import { decodeToken } from "../../utils/jwt/jwt.utils.js";
+import { countMetaForTransactions } from "../middlewares/transaction.middlewares.js";
 
 // add new transaction on bank pulling
 export const addNewTransaction=(data)=>ErrorHandlerService(async(req,res)=>{
@@ -86,18 +87,30 @@ export const getMyTransactions=ErrorHandlerService(async(req,res)=>{
   for(const card of findUserCards){
     allCardsIds.push(card.id);
   };
-  const findMyTransactions=await transactionModel.findAll({
+  req.dbQuery={
+    ...req.dbQuery,
     where:{
+      ...req.dbQuery.where,
       [Op.or]:[
         {cardId:allCardsIds}
-      ]
+      ],
     }
+  }
+  delete req.dbQuery.where.userId
+
+
+  const metaPag=await countMetaForTransactions(req.dbQuery,req.query);
+  console.log({metaPag});
+
+
+  const findMyTransactions=await transactionModel.findAll({
+    ...req.dbQuery,
   });
   if(!findMyTransactions) throw new AppErrorService(400,"failed to get transactions");
   res.status(200).json({
     message:"success",
     data:findMyTransactions,
-    meta:req.meta
+    meta:metaPag
   })
 })
 
@@ -110,21 +123,35 @@ export const getUserTransactions=ErrorHandlerService(async(req,res)=>{
   const findUserCards=await cardModel.findAll({
     where:{userId}
   });
-  console.log({findUserCards});
-
   if(!findUserCards) throw new AppErrorService(400,"failed to get cards");
   const allCardsIds=[];
   for(const card of findUserCards){
     allCardsIds.push(card.id);
   };
-  const findUserTransactions=await transactionModel.findAll({
-    where:{cardId:allCardsIds}
+  req.dbQuery={
+    ...req.dbQuery,
+    where:{
+      ...req.dbQuery.where,
+      [Op.or]:[
+        {cardId:allCardsIds}
+      ],
+    }
+  }
+  delete req.dbQuery.where.userId
+
+
+  const metaPag=await countMetaForTransactions(req.dbQuery,req.query);
+  console.log({metaPag});
+
+
+  const findMyTransactions=await transactionModel.findAll({
+    ...req.dbQuery,
   });
-  if(!findUserTransactions) throw new AppErrorService(400,"failed to get transactions");
+  if(!findMyTransactions) throw new AppErrorService(400,"failed to get transactions");
   res.status(200).json({
     message:"success",
-    data:findUserTransactions,
-    meta:req.meta
+    data:findMyTransactions,
+    meta:metaPag
   })
 })
 

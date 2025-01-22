@@ -31,8 +31,11 @@ export const dateRangeFilterMiddleware = ErrorHandlerService(
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) return next();
     req.filterQuery = req.filterQuery || {};
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+
     req.filterQuery["createdAt"] = {
-      [Op.between]: [new Date(startDate), new Date(endDate)],
+      [Op.between]: [startDateObj, endDateObj],
     };
     next();
   }
@@ -99,79 +102,40 @@ export const handleLogsMiddleware = (app) => {
 
 const distributeLogsMiddleware = async (arrangedLog) => {
   const { url, message } = arrangedLog;
-  const defaultTTL = 365 * 24 * 60 * 60; // 1 year
 
-  if (url.toString().includes("login") || url.toString().includes("logout")) {
-    const { token } = message;
-    const { user } = decodeToken(token);
+  if ((url.includes("login") || url.includes("logout")) && !message?.token) {
+    return;
+  }
+
+  const token = message?.token;
+  const defaultTTL = 365 * 24 * 60 * 60;
+
+  try {
+    const decoded = decodeToken(token);
+    const user = decoded?.user;
+
+    if (!user) return;
+
     const { Role } = user;
 
     if (["owner", "manager", "staff"].includes(Role?.type)) {
       const previousLogsNotUser = await redisUtil.get("not-user-logs");
-      let notUserLogsArr = [];
-
-      if (previousLogsNotUser) {
-        try {
-          notUserLogsArr = JSON.parse(previousLogsNotUser);
-        } catch (error) {
-          console.error("Error parsing 'not-user-logs' from Redis:", error);
-        }
-      }
+      let notUserLogsArr = previousLogsNotUser ? JSON.parse(previousLogsNotUser) : [];
 
       notUserLogsArr.push(arrangedLog);
+      const ttlNotUserLogs = (await redisUtil.ttl("not-user-logs")) || defaultTTL;
 
-      let ttlNotUserLogs = await redisUtil.ttl("not-user-logs");
-      if (ttlNotUserLogs === -1 || ttlNotUserLogs <= 0) {
-        ttlNotUserLogs = defaultTTL;
-      }
-
-      await redisUtil.set("not-user-logs", JSON.stringify(notUserLogsArr), {
-        ex: ttlNotUserLogs,
-      });
+      await redisUtil.set("not-user-logs", JSON.stringify(notUserLogsArr), { ex: ttlNotUserLogs });
     } else {
       const previousLogsUser = await redisUtil.get("user-logs");
-      let userLogsArr = [];
-
-      if (previousLogsUser) {
-        try {
-          userLogsArr = JSON.parse(previousLogsUser);
-        } catch (error) {
-          console.error("Error parsing 'user-logs' from Redis:", error);
-        }
-      }
+      let userLogsArr = previousLogsUser ? JSON.parse(previousLogsUser) : [];
 
       userLogsArr.push(arrangedLog);
+      const ttlUserLogs = (await redisUtil.ttl("user-logs")) || defaultTTL;
 
-      let ttlUserLogs = await redisUtil.ttl("user-logs");
-      if (ttlUserLogs === -1 || ttlUserLogs <= 0) {
-        ttlUserLogs = defaultTTL;
-      }
-
-      await redisUtil.set("user-logs", JSON.stringify(userLogsArr), {
-        ex: ttlUserLogs,
-      });
+      await redisUtil.set("user-logs", JSON.stringify(userLogsArr), { ex: ttlUserLogs });
     }
-  } else {
-    const previousLogsSystem = await redisUtil.get("system-logs");
-    let systemLogsArr = [];
-
-    if (previousLogsSystem) {
-      try {
-        systemLogsArr = JSON.parse(previousLogsSystem);
-      } catch (error) {
-        console.error("Error parsing 'system-logs' from Redis:", error);
-      }
-    }
-
-    systemLogsArr.push(arrangedLog);
-
-    let ttlSystemLogs = await redisUtil.ttl("system-logs");
-    if (ttlSystemLogs === -1 || ttlSystemLogs <= 0) {
-      ttlSystemLogs = defaultTTL;
-    }
-
-    await redisUtil.set("system-logs", JSON.stringify(systemLogsArr), {
-      ex: ttlSystemLogs,
-    });
+  } catch (error) {
+    return;
   }
 };

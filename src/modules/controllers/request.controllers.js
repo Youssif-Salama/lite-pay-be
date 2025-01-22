@@ -16,7 +16,7 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
 
 
   // if user first request
-  const {nameOnCard,phoneNumber,telegram,gender,age,amount,amountUsd,method,rate,promo}=req.body;
+  const {nameOnCard,phoneNumber,telegram,gender,age,amount,amountUsd,method,rate,promo,cardId,attachments}=req.body;
   const [
     getPromos,
     cardPriceActive,
@@ -74,8 +74,9 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
         status:"pending",
         amountUsd:amountInUsd,
         amount:amountInEgp,
-        rate
-      })
+        rate,
+cardId ,
+        attachments})
 
 
       if(!newRequestWithoutCharge) throw new AppErrorService(404,"failed to add new request");
@@ -124,6 +125,8 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
         amountUsd:amountInUsd,
         amount:amountInEgp,
         rate,
+        cardId,
+        attachments
     })
     if(!makeRequestNotForTheFirstTime) throw new AppErrorService(404,"failed to add new request");
     res.status(201).json({
@@ -164,14 +167,7 @@ export const getOneRequest=ErrorHandlerService(async(req,res)=>{
 
 // get all request paginated
 export const getAllRequests=ErrorHandlerService(async(req,res)=>{
-  if(req.filterQuery){
-    Object.entries(req.filterQuery).forEach(([key,value])=>{
-      req.dbQuery.where={
-        ...req.dbQuery.where,
-        [key]:value
-      }
-    })
-  }
+
   const findAll=await requestModel.findAll({
     ...req.dbQuery
   });
@@ -185,12 +181,7 @@ export const getAllRequests=ErrorHandlerService(async(req,res)=>{
 
 // get myRequest
 export const getMyRequests=ErrorHandlerService(async(req,res)=>{
-  const {token}=req.headers;
-  const decodedToken=decodeToken(token);
-  const userId=decodedToken?.user?.id;
-  const getUserAllRequets=await requestModel.findAll({
-    where:{userId}
-  });
+  const getUserAllRequets=await requestModel.findAll(req.dbQuery);
   if(!getUserAllRequets) throw new AppErrorService(400,"failed to fetch all requests");
   res.status(200).json({
     message:"success",
@@ -202,11 +193,6 @@ export const getMyRequests=ErrorHandlerService(async(req,res)=>{
 
 // get user requests
 export const getSpecificUserRequests=ErrorHandlerService(async(req,res)=>{
-  const {id:userId}=req.params;
-  req.dbQuery={
-    ...req.dbQuery,
-    where:{userId}
-  }
   const findAll=await requestModel.findAll(req.dbQuery);
   if(!findAll) throw new AppErrorService(400,"failed to fetch all requests");
   res.status(200).json({

@@ -2,22 +2,20 @@ import {Router} from "express";
 import { authentication, authorization } from "../../middlewares/auth.middlewares.js";
 import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, deleteOneUser, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, getOneUserData, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword, updateOneUserRating } from "../controllers/user.controllers.js";
 import { validate } from "../../middlewares/validation.middleware.js";
-import { includeMiddleware, paginationMiddleware, populateMiddleware, searchMiddlware, selectMiddleware } from "../../middlewares/features.middlewares.js";
-import { roleModel } from "../../../db/dbConnection.js";
-import { addUserRatingSchema, changeRoleAutoSchema, changeUserRoleSchema, updateUserValidationSchema } from "../../validations/user/user.validations.js";
+import { dateRangeFilterMiddleware, includeMiddleware, paginationMiddleware, searchMiddlware, sortingMiddleware } from "../../middlewares/features.middlewares.js";
+import { addUserRatingSchema, changeUserRoleSchema, updateUserValidationSchema } from "../../validations/user/user.validations.js";
 import cardRouter from "./card.routes.js";
-import { dateRangeFilterMiddleware } from "../../middlewares/global.middlewares.js";
 import requestRouter from "./request.routes.js";
 import transactionRouter from "./transaction.routes.js";
+import { filterUserOnRoleMiddleware } from "../../middlewares/user.middlewares.js";
 
 
 
 const userRouter=Router();
 
-// userRouter.get("/",authentication,dateRangeFilterMiddleware,paginationMiddleware("userModel"),selectMiddleware(),populateMiddleware('[{"model": "Role", "attributes": ["id", "name","type"]}]',roleModel,"role","one"),getAllUsers);
 
 // get all users
-userRouter.get("/",authentication,authorization(["manager","owner","staff"]),dateRangeFilterMiddleware,selectMiddleware(),searchMiddlware(["email","name","phoneNumber","telegram"]),includeMiddleware([
+userRouter.get("/",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),dateRangeFilterMiddleware(),searchMiddlware(["email","username","phoneNumber","telegram"]),includeMiddleware([
   {
     model:"roleModel",
     attributes:["type","name","id"]
@@ -25,7 +23,7 @@ userRouter.get("/",authentication,authorization(["manager","owner","staff"]),dat
   {
     model:"cardModel",
   }
-]),paginationMiddleware("userModel"),getAllUsers);
+]),filterUserOnRoleMiddleware,paginationMiddleware("userModel"),getAllUsers);
 
 
 //delete my account

@@ -1,32 +1,31 @@
 import { Router } from "express";
 import { authentication, authorization } from "../../middlewares/auth.middlewares.js";
-import { addNewCard, changeCardStatus, deleteAllCards, deleteCard, deleteSpecificUserCards, getAllCards, getMyCards, getSpecificCardRequests, getSpecificCardTransactions, getSpecificUserCards, updateCard } from "../controllers/card.controllers.js";
-import { includeMiddleware, paginationMiddleware, searchMiddlware, sortingMiddleware } from "../../middlewares/features.middlewares.js";
-import { cardStatusMiddleware } from "../middlewares/card.middlewares.js";
-import { dateRangeFilterMiddleware, situationFilterMiddleware } from "../../middlewares/global.middlewares.js";
+import { addNewCard, changeCardStatus, deleteAllCards, deleteCard, deleteSpecificUserCards, getAllCards, getMyCards, getOneCard, getSpecificCardRequests, getSpecificCardTransactions, getSpecificUserCards, updateCard } from "../controllers/card.controllers.js";
+import { dateRangeFilterMiddleware, includeMiddleware, paginationMiddleware, searchMiddlware, sortingMiddleware } from "../../middlewares/features.middlewares.js";
+import { cardSearchCriteria, cardStatusMiddleware, requestsOnCardFilterMiddleware, specificUserMiddleware, userCardsFilterMiddleware } from "../middlewares/card.middlewares.js";
+import { situationFilterMiddleware } from "../../middlewares/global.middlewares.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { cardValidationSchema, cardValidationSchemaPut } from "../../validations/card/card.validations.js";
-import transactionRouter from "./transaction.routes.js";
-import { filterReqOnType } from "../middlewares/request.middlewares.js";
-import { filterTransactionOnType } from "../middlewares/transaction.middlewares.js";
+import { filterReqOnType, requestStatusMiddleware } from "../middlewares/request.middlewares.js";
+import { filterTransactionOnCard, filterTransactionOnType } from "../middlewares/transaction.middlewares.js";
 
 const cardRouter=Router({mergeParams:true});
 
 // get my cards
-cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","vip","user"]),sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),cardStatusMiddleware,includeMiddleware([
+cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","vip","user"]),sortingMiddleware(),cardStatusMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),userCardsFilterMiddleware,includeMiddleware([
   {
     model:"userModel",
-    attributes:["email","id"]
+    attributes:["email","id","phoneNumber","telegram","username","status"]
   }
 ]),paginationMiddleware("cardModel"),getMyCards);
 
 // get all cards
-cardRouter.get("/all",authentication,authorization(["staff","manager","owner"]),dateRangeFilterMiddleware,sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","type","balance"]),cardStatusMiddleware,paginationMiddleware("cardModel"),includeMiddleware([
+cardRouter.get("/all",authentication,authorization(["staff","manager","owner"]),sortingMiddleware(),cardStatusMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),includeMiddleware([
   {
     model:"userModel",
-    attributes:["email","id"]
+    attributes:["email","id","phoneNumber","telegram","username","status"]
   }
-]),getAllCards);
+]),paginationMiddleware("cardModel"),getAllCards);
 
 // add new card
 cardRouter.post("/",authentication,authorization(["staff","manager","owner"]),validate(cardValidationSchema),addNewCard);
@@ -36,6 +35,9 @@ cardRouter.put("/change-status/:id",authentication,authorization(["staff","manag
 
 // delete all cards
 cardRouter.delete("/all",authentication,authorization(["manager","owner"]),deleteAllCards);
+
+// get on card
+cardRouter.get("/one/:id",authentication,authorization(["manager","owner","staff"]),getOneCard);
 
 // delete one card
 cardRouter.delete("/:id",authentication,authorization(["manager","owner"]),deleteCard);
@@ -47,20 +49,21 @@ cardRouter.put("/:id",authentication,authorization(["manager","owner","staff"]),
 cardRouter.delete("/",authentication,authorization(["manager","owner"]),deleteSpecificUserCards);
 
 // get user cards
-cardRouter.get("/",authentication,authorization(["staff","manager","owner"]),sortingMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),cardStatusMiddleware,includeMiddleware([
+cardRouter.get("/",authentication,authorization(["staff","manager","owner"]),sortingMiddleware(),specificUserMiddleware,cardStatusMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),includeMiddleware([
   {
     model:"userModel",
-    attributes:["email","id"]
+    attributes:["email","id","phoneNumber","telegram","username","status"]
   }
 ]),paginationMiddleware("cardModel"),getSpecificUserCards);
 
 // get card transactions
-cardRouter.get("/transactions/:id",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),filterTransactionOnType,paginationMiddleware("transactionModel"),getSpecificCardTransactions);
+cardRouter.get("/transactions/:id",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),filterTransactionOnCard,filterTransactionOnType,requestStatusMiddleware,searchMiddlware(["companyName","amount"]),paginationMiddleware("transactionModel"),getSpecificCardTransactions);
+
 // get card requests
-cardRouter.get("/requests/:id",authentication,authorization(["manager","owner","staff"]),filterReqOnType,situationFilterMiddleware(["status","method"]),dateRangeFilterMiddleware,sortingMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),paginationMiddleware("requestModel"),includeMiddleware([
+cardRouter.get("/requests/:id",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),dateRangeFilterMiddleware(),requestsOnCardFilterMiddleware,filterReqOnType,requestStatusMiddleware,searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),paginationMiddleware("requestModel"),includeMiddleware([
   {
     model:"userModel",
-    attributes:["email","id"]
+    attributes:["email","id","telegram","username","status"]
   },
   {
     model:"cardModel",

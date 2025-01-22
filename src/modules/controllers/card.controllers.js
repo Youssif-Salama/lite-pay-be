@@ -36,6 +36,7 @@ export const addNewCard=ErrorHandlerService(async(req,res)=>{
   await findRequest.save();
   const findUser=await userModel.findOne({where:{id:userId}});
   findUser.cards=[...(findUser?.cards || []), result?.id]
+  findUser.username=nameOnCard;
   await findUser.save();
   res.status(201).json({
     message:"card added successfully",
@@ -95,13 +96,6 @@ export const getAllCards=ErrorHandlerService(async(req,res)=>{
 
 // get all my cards merge params
 export const getMyCards=ErrorHandlerService(async(req,res)=>{
-  const token=req.headers.token;
-  const decodedToken=decodeToken(token);
-  const userId=decodedToken.user.id;
-  req.dbQuery={
-    ...req.dbQuery,
-    where:{userId}
-  }
   const findAll=await cardModel.findAll(req.dbQuery);
   if(!findAll) throw new AppErrorService(400,"failed to fetch all cards");
   res.status(200).json({
@@ -133,11 +127,34 @@ export const deleteCard=ErrorHandlerService(async(req,res)=>{
 // update one card in dashboard
 export const updateCard=ErrorHandlerService(async(req,res)=>{
   const {id}=req.params;
-  const updateCard=await cardModel.update(req.body,{where:{id}});
+  const updateCard=await cardModel.update(req.body,{where:{id,status:"active"}});
   if(!updateCard) throw new AppErrorService(400,"failed to update card");
   res.status(200).json({
     message:"card updated successfully",
     data:updateCard
+  })
+})
+
+// get one card
+export const getOneCard=ErrorHandlerService(async(req,res)=>{
+  const {id}=req.params;
+  const findOne=await cardModel.findOne({
+    where:{
+      id
+    },
+    include:[{
+      model:userModel,
+      include:[
+        {
+          model:roleModel
+        }
+      ]
+    }]
+  })
+  if(!findOne) throw new AppErrorService(400,"failed to fetch card");
+  res.status(200).json({
+    message:"success",
+    data:findOne
   })
 })
 
@@ -153,11 +170,6 @@ export const deleteSpecificUserCards=ErrorHandlerService(async(req,res)=>{
 
 // get user cards
 export const getSpecificUserCards=ErrorHandlerService(async(req,res)=>{
-  const {id:userId}=req.params;
-  req.dbQuery={
-    ...req.dbQuery,
-    where:{userId}
-  }
   const findAll=await cardModel.findAll(req.dbQuery);
   if(!findAll) throw new AppErrorService(400,"failed to fetch all cards");
   res.status(200).json({
@@ -169,11 +181,6 @@ export const getSpecificUserCards=ErrorHandlerService(async(req,res)=>{
 
 // get card transactions
 export const getSpecificCardTransactions= ErrorHandlerService(async(req,res)=>{
-  const {id}=req.params;
-  req.dbQuery={
-    ...req.dbQuery,
-    where:{cardId:id}
-  }
   const findAll=await transactionModel.findAll(req.dbQuery);
   if(!findAll) throw new AppErrorService(400,"failed to fetch all transactions");
   res.status(200).json({
@@ -185,12 +192,7 @@ export const getSpecificCardTransactions= ErrorHandlerService(async(req,res)=>{
 
 // get card requests
 export const getSpecificCardRequests=ErrorHandlerService(async(req,res)=>{
-  const {id}=req.params;
-  req.dbQuery={
-    ...req.dbQuery,
-    where:{cardId:id}
-  }
-  const findAll=await requestModel.findAll(req.dbQuery);
+  const findAll=await requestModel.findAll({...req.dbQuery});
   if(!findAll) throw new AppErrorService(400,"failed to fetch all transactions");
   res.status(200).json({
     message:"success",
