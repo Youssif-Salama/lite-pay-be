@@ -12,7 +12,7 @@ export const filterTransactionOnType=ErrorHandlerService(async(req,res,next)=>{
   next();
 })
 
-export const filterTransactionOnCard=ErrorHandlerService(()=>{
+export const filterTransactionOnCard=ErrorHandlerService(async(req,res, next)=>{
   const {id}=req.params;
   req.dbQuery={
     ...(req.dbQuery || {}),

@@ -20,7 +20,7 @@ const bootstrap = (app) => {
   app.use(cors());
 
   // CORS
-  // app.use(cors({
+  // app.use(cors({card
   //   origin:(origin,cb)=>{
   //     if(process.env.ALLOWED_ORIGINS.includes(origin)){
   //       cb(null,true);
