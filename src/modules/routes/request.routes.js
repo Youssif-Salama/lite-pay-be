@@ -4,7 +4,7 @@ import { authentication, authorization } from "../../middlewares/auth.middleware
 import { dateRangeFilterMiddleware, includeMiddleware, paginationMiddleware, searchMiddlware, selectMiddleware, sortingMiddleware } from "../../middlewares/features.middlewares.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { changeRequestStatusValidationSchema } from "../../validations/request/request.validations.js";
-import { filterReqOnType, filterReqOnUser, requestMethodMiddleware, requestStatusMiddleware } from "../middlewares/request.middlewares.js";
+import { displayRequestUserRole, filterReqOnType, filterReqOnUser, requestMethodMiddleware, requestStatusMiddleware } from "../middlewares/request.middlewares.js";
 import {  situationFilterMiddleware } from "../../middlewares/global.middlewares.js";
 import { specificUserMiddleware } from "../middlewares/card.middlewares.js";
 
@@ -17,7 +17,7 @@ requestRouter.post("/",authentication,addNewRequest);
 // get my requests
 requestRouter.get("/mine",authentication,authorization(["user","vip","staff","manager","owner"]),sortingMiddleware(),filterReqOnUser,requestStatusMiddleware,filterReqOnType,requestMethodMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","telegram"]),includeMiddleware([
   {
-    model:"cardModel",
+    model:"cardModel"
   }
 ]),paginationMiddleware("requestModel"),getMyRequests);
 
@@ -26,8 +26,12 @@ requestRouter.get("/mine",authentication,authorization(["user","vip","staff","ma
 requestRouter.get("/",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),requestStatusMiddleware,filterReqOnType,requestMethodMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","telegram"]),includeMiddleware([
   {
     model:"cardModel",
+  },
+  {
+    model:"userModel",
+    attributes:["email","id","telegram","username","status"]
   }
-]),paginationMiddleware("requestModel"),getAllRequests);
+]),displayRequestUserRole,paginationMiddleware("requestModel"),getAllRequests);
 
 
 // get user requests
@@ -39,7 +43,7 @@ requestRouter.get("/specific",authentication,authorization(["manager","owner","s
   {
     model:"cardModel",
   }
-]),specificUserMiddleware,paginationMiddleware("requestModel"),getSpecificUserRequests);
+]),specificUserMiddleware,displayRequestUserRole,paginationMiddleware("requestModel"),getSpecificUserRequests);
 
 // delete user requests
 requestRouter.delete("/specific",authentication,authorization(["manager","owner","staff"]),deleteSpecificUserRequests);

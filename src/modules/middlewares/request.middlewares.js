@@ -55,3 +55,18 @@ export const requestMethodMiddleware=ErrorHandlerService(async(req,res,next)=>{
   }
   next();
 })
+
+export const displayRequestUserRole=ErrorHandlerService(async(req,res,next)=>{
+  req.dbQuery={
+    ...req.dbQuery,
+    include:[
+      ...(req.dbQuery.include || []),
+      {
+      model:userModel,
+      include:[{
+        model:roleModel
+      }]
+    }]
+  }
+  next();
+})
