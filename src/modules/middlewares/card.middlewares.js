@@ -1,6 +1,7 @@
 import { Op, Sequelize } from "sequelize";
 import { ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import { decodeToken } from "../../utils/jwt/jwt.utils.js";
+import { roleModel } from "../../../db/dbConnection.js";
 
 // if req.query.status retrun
 export const cardStatusMiddleware=ErrorHandlerService(async(req,res,next)=>{
@@ -11,6 +12,21 @@ export const cardStatusMiddleware=ErrorHandlerService(async(req,res,next)=>{
     where:{"status":status,
       ...req.dbQuery.where
     }
+  }
+  next();
+})
+
+export const cardOwnerPlanMiddleware=ErrorHandlerService(async(req,res,next)=>{
+  const {role}=req.query;
+  req.dbQuery={
+    ...req.dbQuery,
+    include:[{
+      model:userModel,
+      include:[{
+        model:roleModel,
+        where:{type:role}
+      }]
+    }]
   }
   next();
 })

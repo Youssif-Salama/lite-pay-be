@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authentication, authorization } from "../../middlewares/auth.middlewares.js";
 import { addNewCard, changeCardStatus, deleteAllCards, deleteCard, deleteSpecificUserCards, getAllCards, getMyCards, getOneCard, getSpecificCardRequests, getSpecificCardTransactions, getSpecificUserCards, updateCard } from "../controllers/card.controllers.js";
 import { dateRangeFilterMiddleware, includeMiddleware, paginationMiddleware, searchMiddlware, sortingMiddleware } from "../../middlewares/features.middlewares.js";
-import { cardSearchCriteria, cardStatusMiddleware, requestsOnCardFilterMiddleware, specificUserMiddleware, userCardsFilterMiddleware } from "../middlewares/card.middlewares.js";
+import { cardOwnerPlanMiddleware, cardSearchCriteria, cardStatusMiddleware, requestsOnCardFilterMiddleware, specificUserMiddleware, userCardsFilterMiddleware } from "../middlewares/card.middlewares.js";
 import { situationFilterMiddleware } from "../../middlewares/global.middlewares.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { cardValidationSchema, cardValidationSchemaPut } from "../../validations/card/card.validations.js";
@@ -20,7 +20,7 @@ cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","
 ]),paginationMiddleware("cardModel"),getMyCards);
 
 // get all cards
-cardRouter.get("/all",authentication,authorization(["staff","manager","owner"]),sortingMiddleware(),cardStatusMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),includeMiddleware([
+cardRouter.get("/all",authentication,authorization(["staff","manager","owner"]),sortingMiddleware(),cardStatusMiddleware,cardOwnerPlanMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),includeMiddleware([
   {
     model:"userModel",
     attributes:["email","id","phoneNumber","telegram","username","status"]
