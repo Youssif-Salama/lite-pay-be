@@ -15,7 +15,7 @@ requestRouter.post("/",authentication,addNewRequest);
 
 
 // get my requests
-requestRouter.get("/mine",authentication,authorization(["user","vip","staff","manager","owner"]),sortingMiddleware(),filterReqOnUser,requestStatusMiddleware,filterReqOnType,requestMethodMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","telegram"]),includeMiddleware([
+requestRouter.get("/mine",authentication,authorization(["user","vip","staff","manager","owner"]),sortingMiddleware(),filterReqOnUser,requestStatusMiddleware,filterReqOnType,requestMethodMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["account","nameOnCard","amount"]),includeMiddleware([
   {
     model:"cardModel"
   }
@@ -23,7 +23,7 @@ requestRouter.get("/mine",authentication,authorization(["user","vip","staff","ma
 
 
 // get all requests
-requestRouter.get("/",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),requestStatusMiddleware,filterReqOnType,requestMethodMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","telegram"]),includeMiddleware([
+requestRouter.get("/",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),requestStatusMiddleware,filterReqOnType,requestMethodMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["account","nameOnCard","amount"]),includeMiddleware([
   {
     model:"cardModel",
   },
@@ -35,7 +35,7 @@ requestRouter.get("/",authentication,authorization(["manager","owner","staff"]),
 
 
 // get user requests
-requestRouter.get("/specific",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),searchMiddlware(["account","nameOnCard","phoneNumber","email","telegram"]),dateRangeFilterMiddleware(),situationFilterMiddleware(["status","method"]),includeMiddleware([
+requestRouter.get("/specific",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),searchMiddlware(["account","nameOnCard","amount"]),dateRangeFilterMiddleware(),situationFilterMiddleware(["status","method"]),includeMiddleware([
   {
     model:"userModel",
     attributes:["email","id","telegram","username","status"]

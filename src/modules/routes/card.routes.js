@@ -15,7 +15,7 @@ const cardRouter=Router({mergeParams:true});
 cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","vip","user"]),sortingMiddleware(),cardStatusMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),userCardsFilterMiddleware,includeMiddleware([
   {
     model:"userModel",
-    attributes:["email","id","phoneNumber","telegram","username","status"]
+    attributes:["email","id","telegram","username","status"]
   }
 ]),paginationMiddleware("cardModel"),getMyCards);
 
@@ -23,7 +23,7 @@ cardRouter.get("/mine",authentication,authorization(["staff","manager","owner","
 cardRouter.get("/all",authentication,authorization(["staff","manager","owner"]),sortingMiddleware(),cardStatusMiddleware,cardOwnerPlanMiddleware,dateRangeFilterMiddleware(),searchMiddlware(["cardNumber","cvv","name","balance"]),includeMiddleware([
   {
     model:"userModel",
-    attributes:["email","id","phoneNumber","telegram","username","status"]
+    attributes:["email","id","telegram","username","status"]
   }
 ]),paginationMiddleware("cardModel"),getAllCards);
 
