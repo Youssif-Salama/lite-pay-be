@@ -3,13 +3,15 @@ import { ErrorHandlerService } from "../services/ErrorHandler.services.js";
 
 export const filterUserOnRoleMiddleware=ErrorHandlerService(async(req,res,next)=>{
   const {role}=req.query;
-  if(!role) return next();
-  req.dbQuery={
+  req.dbQuery = {
     ...req.dbQuery,
-    include:[{
-      model:roleModel,
-      where:{type:role}
-    }]
-  }
+    include: [
+      {
+        model: roleModel,
+        ...(role ? { where: { type: role } } : {}),
+      },
+      ...(req.dbQuery.include || []),
+    ],
+  };
   next();
 });

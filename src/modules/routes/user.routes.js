@@ -17,11 +17,7 @@ const userRouter=Router();
 // get all users
 userRouter.get("/",authentication,authorization(["manager","owner","staff"]),sortingMiddleware(),dateRangeFilterMiddleware(),searchMiddlware(["email","username","phoneNumber","telegram"]),includeMiddleware([
   {
-    model:"roleModel",
-    attributes:["type","name","id"]
-  },
-  {
-    model:"cardModel",
+    model:"cardModel"
   }
 ]),filterUserOnRoleMiddleware,paginationMiddleware("userModel"),getAllUsers);
 
