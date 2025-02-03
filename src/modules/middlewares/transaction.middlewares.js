@@ -1,4 +1,4 @@
-import { transactionModel } from "../../../db/dbConnection.js";
+import { cardModel, transactionModel } from "../../../db/dbConnection.js";
 import { ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 
 export const filterTransactionOnType=ErrorHandlerService(async(req,res,next)=>{
@@ -14,9 +14,11 @@ export const filterTransactionOnType=ErrorHandlerService(async(req,res,next)=>{
 
 export const filterTransactionOnCard=ErrorHandlerService(async(req,res, next)=>{
   const {id}=req.params;
+  const findBankCardId=await cardModel.findOne({id});
+  if(!findBankCardId) throw new AppErrorService(400,"card not found");
   req.dbQuery={
     ...(req.dbQuery || {}),
-    where:{cardId:id,
+    where:{bankCardId:findBankCardId.bankId,
       ...(req.dbQuery.where || {})}
   };
   next();

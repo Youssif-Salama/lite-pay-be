@@ -112,7 +112,7 @@ export const displayBankTransactionsInterval = (callback) => {
         const filteredData = result
           .filter((item) => item?.details?.debitCardInfo?.id && item)
           .filter((item) => !existingTransactionIds.includes(item?.id));
-          
+
         console.log(filteredData);
 
         if (filteredData.length > 0) {
@@ -161,7 +161,6 @@ export const displayBankTransactionsInterval = (callback) => {
         pollingInterval = 10000;
       }
     } catch (error) {
-      console.error("Error fetching transactions:", error);
       pollingInterval = Math.min(maxInterval, pollingInterval * 2);
     } finally {
       clearInterval(intervalId);

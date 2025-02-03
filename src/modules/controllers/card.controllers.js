@@ -10,7 +10,7 @@ env.config();
 export const addNewCard=ErrorHandlerService(async(req,res)=>{
   const expiryTestDate=DateService(1);
   // const get request from reqests by its id
-  const {requestId,cardNumber,cvv,type,cardBalance,expiryDate}=req.body;
+  const {requestId,cardNumber,cvv,type,cardBalance,expiryDate,bankId}=req.body;
 
   const isDateEqual=checkDatesEquality(expiryTestDate,expiryDate);
 
@@ -21,7 +21,7 @@ export const addNewCard=ErrorHandlerService(async(req,res)=>{
 
   const {nameOnCard,userId,rate}=findRequest;
   const result=await cardModel.create({
-    bankId:process.env.Bank_Id,
+    bankId,
     cardNumber,
     cvv,
     type,
@@ -162,8 +162,6 @@ export const getOneCard=ErrorHandlerService(async(req,res)=>{
       }
     }
   });
-  console.log(getAllCardSuccessRequests);
-
   const totalLast30DaysDeposit = getAllCardSuccessRequests.reduce((total, request) => {
     return total + Number(request.amountUsd);
   }, 0);
