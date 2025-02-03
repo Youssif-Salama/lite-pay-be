@@ -46,16 +46,55 @@ export const fetchMyAccounts = ErrorHandlerService(async (req, res) => {
  * Fetches the bank cards from the bank API, removing the last character from the Bank_Api_Url.
  */
 export const fetchMyCards = ErrorHandlerService(async (req, res) => {
-  const {sortKey,sortValue}=req.query;
-  if(!sortKey || !sortValue) return next();
-  // Remove the last character from the Bank_Api_Url
-  const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1); // Removes the last character
-  const url = `${modifiedUrl}/${process.env.Bank_Id}/cards`; // Construct the full URL
+  const { sortKey, sortValue } = req.query;
 
-  const data = await fetchFromBankApi(url);
-  data=data?.cards?.sort((a,b)=>a[sortKey]-b[sortKey]);
-  res.status(200).json({ message: "Cards fetched successfully", data });
+  const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1);
+  const url = `${modifiedUrl}/${process.env.Bank_Id}/cards`;
+
+  try {
+    const data = await fetchFromBankApi(url);
+
+    if (!data || !data.cards) {
+      return res.status(404).json({ message: "No cards found" });
+    }
+
+    let sortedData = data.cards;
+
+    if (sortKey && sortValue) {
+      sortedData = [...data.cards].sort((a, b) => {
+        const valueA = a[sortKey];
+        const valueB = b[sortKey];
+
+        if (sortValue === 'desc') {
+          if (typeof valueA === 'string' && typeof valueB === 'string') {
+            return valueB.localeCompare(valueA);
+          } else if (valueA instanceof Date && valueB instanceof Date) {
+            return valueB - valueA;
+          } else if (typeof valueA === 'number' && typeof valueB === 'number') {
+            return valueB - valueA;
+          }
+        } else {
+          if (typeof valueA === 'string' && typeof valueB === 'string') {
+            return valueA.localeCompare(valueB);
+          } else if (valueA instanceof Date && valueB instanceof Date) {
+            return valueA - valueB;
+          } else if (typeof valueA === 'number' && typeof valueB === 'number') {
+            return valueA - valueB;
+          }
+        }
+
+        return 0;  // In case the field type doesn't match any criteria
+      });
+    }
+
+    res.status(200).json({ message: "Cards fetched successfully", data: sortedData });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching cards", error: error.message });
+  }
 });
+
+
+
 
 /**
  * Fetches the bank transactions from the bank API, with an optional start parameter.
