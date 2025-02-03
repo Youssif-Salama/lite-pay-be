@@ -152,24 +152,31 @@ export const getOneCard=ErrorHandlerService(async(req,res)=>{
       ]
     }]
   })
-  const getAllCardSuccessRequests=await requestModel.findAll({
-    where:{
-      cardId:id,
-      status:"success",
-      createdAt:{
-        [Op.lt]:new Date(),
-        [Op.gte]:new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  const getAllCardSuccessRequests = await requestModel.findAll({
+    where: {
+      cardId: id,
+      status: "success",
+      createdAt: {
+        [Op.lt]: new Date(),
+        [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       }
     }
-  })
-  let totalLas30DaysDeposit=0;
-  getAllCardSuccessRequests.forEach(request=>{
-    totalLas30DaysDeposit+=Number(request.amountUsd);
-  })
+  });
+  console.log(getAllCardSuccessRequests);
+
+  const totalLast30DaysDeposit = getAllCardSuccessRequests.reduce((total, request) => {
+    return total + Number(request.amountUsd);
+  }, 0);
+
   if(!findOne) throw new AppErrorService(400,"failed to fetch card");
+  let data = {
+    ...findOne.toJSON ? findOne.toJSON() : findOne,
+    totalLast30DaysDeposit
+  };
+
   res.status(200).json({
     message:"success",
-    data:{...findOne,totalLas30DaysDeposit},
+    data,
   })
 })
 
