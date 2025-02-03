@@ -3,6 +3,7 @@ import { checkDatesEquality, DateService } from "../../services/Date.services.js
 import { AppErrorService, ErrorHandlerService } from "../../services/ErrorHandler.services.js";
 import env from "dotenv";
 import { decodeToken } from "../../utils/jwt/jwt.utils.js";
+import { Op } from "sequelize";
 env.config();
 
 // add new card
