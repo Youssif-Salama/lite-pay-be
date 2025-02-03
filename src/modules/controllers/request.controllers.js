@@ -39,6 +39,13 @@ export const addNewRequest = ErrorHandlerService(async (req, res) => {
 
 
   if(findUser?.requests?.length==0 || !findUser?.requests){
+      // check if the user already has a request with the same phone number
+  const findRequest = await requestModel.findOne({
+    where: {
+      phoneNumber
+    },
+  })
+  if(findRequest) throw new AppErrorService(400,"user already has a request with the same phone number");
       // catch otp
   const{otp,otpToken}=req.body;
   if(!otp || !otpToken) throw new AppErrorService(400,"otp or otpToken not found");

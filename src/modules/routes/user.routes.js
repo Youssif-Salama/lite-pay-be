@@ -1,6 +1,6 @@
 import {Router} from "express";
 import { authentication, authorization } from "../../middlewares/auth.middlewares.js";
-import { addSpecificUserRating, ApplyMyRequestsAndTransactionsPagination, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, deleteOneUser, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, getOneUserData, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword, updateOneUserRating } from "../controllers/user.controllers.js";
+import { addSpecificUserRating, ApplyMyRequestsAndTransactionsFilters, autoRequestsListenerForVipRole, blockUser, changeUserRole, deleteMyAccount, deleteOneUser, forgotPasswordReq, getAllUsers, getMyRequestsAndTransactions, getOneUserData, resetPasswordDo, unBlockUser, updateMyAccount, updateMyPassword, updateOneUserRating } from "../controllers/user.controllers.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import { dateRangeFilterMiddleware, includeMiddleware, paginationMiddleware, searchMiddlware, sortingMiddleware } from "../../middlewares/features.middlewares.js";
 import { addUserRatingSchema, changeUserRoleSchema, updateUserValidationSchema } from "../../validations/user/user.validations.js";
@@ -57,7 +57,7 @@ userRouter.post("/rating",authentication,authorization(["manager","owner","staff
 userRouter.put("/change-role-auto",authentication,authorization(["manager","owner","staff","vip","user"]),autoRequestsListenerForVipRole);
 
 // get all my raquests and transactions
-userRouter.post("/req-trans",authentication,authorization(["user","vip","staff","manager","owner"]),getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsPagination);
+userRouter.post("/req-trans",authentication,authorization(["user","vip","staff","manager","owner"]),getMyRequestsAndTransactions,ApplyMyRequestsAndTransactionsFilters);
 
 // get one user
 userRouter.get("/one/:id",authentication,authorization(["user","vip","staff","manager","owner"]),getOneUserData);

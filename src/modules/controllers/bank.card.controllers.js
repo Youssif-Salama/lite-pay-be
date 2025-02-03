@@ -46,11 +46,14 @@ export const fetchMyAccounts = ErrorHandlerService(async (req, res) => {
  * Fetches the bank cards from the bank API, removing the last character from the Bank_Api_Url.
  */
 export const fetchMyCards = ErrorHandlerService(async (req, res) => {
+  const {sortKey,sortValue}=req.query;
+  if(!sortKey || !sortValue) return next();
   // Remove the last character from the Bank_Api_Url
   const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1); // Removes the last character
   const url = `${modifiedUrl}/${process.env.Bank_Id}/cards`; // Construct the full URL
 
   const data = await fetchFromBankApi(url);
+  data=data?.cards?.sort((a,b)=>a[sortKey]-b[sortKey]);
   res.status(200).json({ message: "Cards fetched successfully", data });
 });
 

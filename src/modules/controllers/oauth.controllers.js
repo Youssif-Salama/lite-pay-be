@@ -5,7 +5,7 @@ import { makeToken } from "../../utils/jwt/jwt.utils.js";
 export const addNewGoogleLoggedInUser= ErrorHandlerService(async (req, res) => {
   const { email, name, googleId, accessToken ,lang} = req.data;
   // check if this email has a normal account
-  const checkIfEmailUsed = await userModel.findOne({ where: { email } });
+  const checkIfEmailUsed = await userModel.findOne({ where: { email }, include: { model: roleModel } });
 
     // find the user role
     const findUserRole=await roleModel.findOne({type:"user"});
@@ -22,7 +22,7 @@ export const addNewGoogleLoggedInUser= ErrorHandlerService(async (req, res) => {
 
     if (!signUpNewUser)
       throw new AppErrorService(400, "failed to create user");
-    const token = makeToken({ user: signUpNewUser, accessToken });
+    const token = makeToken({ user: {...signUpNewUser,Role:findUserRole}, accessToken });
     res.redirect(process.env.Frontend_Link+"/"+lang+"/login?token="+token)
     // res.status(201).json({ message: "signup success", token,lang });
   } else {

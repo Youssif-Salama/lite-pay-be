@@ -67,11 +67,40 @@ export const updateMyPassword=ErrorHandlerService(async(req,res)=>{
 })
 
 // used
-export const getAllUsers=ErrorHandlerService(async(req,res)=>{
-  const users=await userModel.findAll({...req.dbQuery})
-  if(!users) throw new AppErrorService(400,"failed to get users");
-  res.status(200).json({message:"users fetched successfully",data:users,meta:req.meta});
-})
+export const getAllUsers = ErrorHandlerService(async (req, res) => {
+  const users = await userModel.findAll({ ...req.dbQuery });
+
+  if (!users || users.length === 0) {
+    throw new AppErrorService(400, "Failed to get users");
+  }
+
+  const userIds = users.map(user => user.id);
+
+  const last30DaysRequests = await requestModel.findAll({
+    where: {
+      userId: { [Op.in]: userIds },
+      status: "success",
+      createdAt: { [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+    },
+    attributes: ["userId", "amountUsd"]
+  });
+
+  const depositMap = last30DaysRequests.reduce((acc, request) => {
+    acc[request.userId] = (acc[request.userId] || 0) + (request.amountUsd || 0);
+    return acc;
+  }, {});
+
+  const data = users.map(user => ({
+    ...user.toJSON(),
+    last30DaysDeposit: depositMap[user.id] || 0
+  }));
+
+  res.status(200).json({
+    message: "Users fetched successfully",
+    data,
+    meta: req.meta
+  });
+});
 
 // don't use now in routes or apis
 export const deleteUser=ErrorHandlerService(async(req,res)=>{
@@ -230,7 +259,7 @@ export const getMyRequestsAndTransactions=ErrorHandlerService(async(req,res,next
   next();
 })
 
-export const ApplyMyRequestsAndTransactionsPagination = ErrorHandlerService(async (req, res) => {
+export const ApplyMyRequestsAndTransactionsFilters = ErrorHandlerService(async (req, res) => {
   const { page = 1, limit = 10, sort = 'asc', status,whatDate } = req.query;
   const getMyRequestsAndTransactions = req.getMyRequestsAndTransactions;
 
