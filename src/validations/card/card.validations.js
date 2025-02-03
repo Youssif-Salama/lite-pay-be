@@ -3,6 +3,9 @@ import Joi from "joi";
   * card new schema
 */
 export const cardValidationSchema = Joi.object({
+  bankId: Joi.string().required().messages({
+    "string.empty":"bankId cannot be empty"
+  }),
   requestId: Joi.string().required().messages({
     "string.empty":"requestId cannot be empty"
   }),
