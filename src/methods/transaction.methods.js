@@ -84,8 +84,100 @@ env.config();
 // };
 
 
+// export const displayBankTransactionsInterval = (callback) => {
+//   let result = null;
+//   let pollingInterval = 10000;
+//   const maxInterval = 20000;
+//   let intervalId;
+
+//   const path = "/transactions";
+//   const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1);
+//   const url = `${modifiedUrl}/${process.env.Bank_Id}${path}`;
+
+//   const pollTransactions = async () => {
+//     try {
+//       const data = await fetchFromBankApi(url);
+//       const transactions = data?.transactions;
+
+//       if (JSON.stringify(transactions) !== JSON.stringify(result)) {
+//         result = transactions;
+
+//         const existingTransactions = await transactionModel.findAll({
+//           attributes: ["transactionId"],
+//         });
+//         const existingTransactionIds = existingTransactions.map(
+//           (tx) => tx.transactionId
+//         );
+
+//         const filteredData = result
+//           .filter((item) => item?.details?.debitCardInfo?.id && item)
+//           .filter((item) => !existingTransactionIds.includes(item?.id));
+
+//         const cards=await cardModel.findAll();
+
+//         if (filteredData.length > 0) {
+//           const arrangedData = await Promise.all(
+//             filteredData.map(async (item) => {
+//               // Fetch the brand avatar
+//               const avatar = await fetchBrandData(item?.counterpartyName);
+
+//               // Calculate amount
+//               let amount = item?.amount;
+//               if (item?.relatedTransactions?.amount) {
+//                 amount += item?.relatedTransactions?.amount;
+//               }
+
+//               // Determine status
+//               let itemStatus = "pending";
+//               if (item?.status === "sent") itemStatus = "approved";
+//               if (item?.status === "failed") itemStatus = "rejected";
+
+//               return {
+//                 amount: amount,
+//                 transactionId: item?.id,
+//                 companyName: item?.counterpartyName,
+//                 avatar: avatar,
+//                 date: item?.estimatedDeliveryDate,
+//                 time: item?.postedAt,
+//                 failureReason: item?.reasonForFailure,
+//                 category: item?.mercuryCategory,
+//                 bankCardId: item?.details?.debitCardInfo?.id,
+//                 details: JSON.stringify({
+//                   details: item,
+//                   relatedTransactions: item?.relatedTransactions,
+//                   bankDescription: item?.bankDescription,
+//                 }),
+//                 cardId: cards.find((card) => card.bankId === item?.details?.debitCardInfo?.id)?.id,
+//                 status: itemStatus,
+//                 bankCreatedAt: item?.createdAt,
+//               };
+//             })
+//           );
+
+//           if (typeof callback === "function") {
+//             await callback(arrangedData);
+//           }
+//         }
+
+//         pollingInterval = 10000;
+//       }
+//     } catch (error) {
+//       pollingInterval = Math.min(maxInterval, pollingInterval * 2);
+//     } finally {
+//       clearInterval(intervalId);
+//       intervalId = setInterval(pollTransactions, pollingInterval);
+//       console.log("finish polling");
+//     }
+//   };
+
+//   intervalId = setInterval(pollTransactions, pollingInterval);
+
+//   return () => clearInterval(intervalId);
+// };
+
+
+
 export const displayBankTransactionsInterval = (callback) => {
-  let result = null;
   let pollingInterval = 10000;
   const maxInterval = 20000;
   let intervalId;
@@ -99,39 +191,37 @@ export const displayBankTransactionsInterval = (callback) => {
       const data = await fetchFromBankApi(url);
       const transactions = data?.transactions;
 
-      if (JSON.stringify(transactions) !== JSON.stringify(result)) {
-        result = transactions;
+      const existingTransactions = await transactionModel.findAll({
+        attributes: ["transactionId"],
+      });
+      const existingTransactionIds = existingTransactions.map(
+        (tx) => tx.transactionId
+      );
 
-        const existingTransactions = await transactionModel.findAll({
-          attributes: ["transactionId"],
-        });
-        const existingTransactionIds = existingTransactions.map(
-          (tx) => tx.transactionId
-        );
+      // تصفية البيانات لعدم تكرارها بناءً على المعاملات المخزنة في قاعدة البيانات
+      const filteredData = transactions
+        .filter((item) => item)
+        .filter((item) => !existingTransactionIds.includes(item?.id));
 
-        const filteredData = result
-          .filter((item) => item?.details?.debitCardInfo?.id && item)
-          .filter((item) => !existingTransactionIds.includes(item?.id));
+      const cards = await cardModel.findAll();
 
-        console.log(filteredData);
+      if (filteredData.length > 0) {
+        // تجهيز البيانات الجديدة
+        const arrangedData = await Promise.all(
+          filteredData.map(async (item) => {
+            const avatar = await fetchBrandData(item?.counterpartyName);
 
-        if (filteredData.length > 0) {
-          const arrangedData = await Promise.all(
-            filteredData.map(async (item) => {
-              // Fetch the brand avatar
-              const avatar = await fetchBrandData(item?.counterpartyName);
+            let amount = item?.amount;
+            if (item?.relatedTransactions?.amount) {
+              amount += item?.relatedTransactions?.amount;
+            }
 
-              // Calculate amount
-              let amount = item?.amount;
-              if (item?.relatedTransactions?.amount) {
-                amount += item?.relatedTransactions?.amount;
-              }
+            let itemStatus = "pending";
+            if (item?.status === "sent") itemStatus = "approved";
+            if (item?.status === "failed") itemStatus = "rejected";
 
-              // Determine status
-              let itemStatus = "pending";
-              if (item?.status === "sent") itemStatus = "approved";
-              if (item?.status === "failed") itemStatus = "rejected";
-
+            // إذا كانت المعاملة تحتوي على details (معلومات البطاقة)
+            if (item?.details?.debitCardInfo) {
               return {
                 amount: amount,
                 transactionId: item?.id,
@@ -147,32 +237,65 @@ export const displayBankTransactionsInterval = (callback) => {
                   relatedTransactions: item?.relatedTransactions,
                   bankDescription: item?.bankDescription,
                 }),
+                cardId: cards.find((card) => card.bankId === item?.details?.debitCardInfo?.id)?.id,
                 status: itemStatus,
                 bankCreatedAt: item?.createdAt,
               };
-            })
-          );
+            } else {
+              // إذا كانت المعاملة لا تحتوي على details
+              return {
+                amount: amount,
+                transactionId: item?.id,
+                companyName: item?.counterpartyName,
+                avatar: avatar,
+                date: item?.estimatedDeliveryDate,
+                time: item?.postedAt,
+                failureReason: item?.reasonForFailure,
+                category: item?.mercuryCategory,
+                bankCardId: null,  // لا توجد تفاصيل بطاقة
+                details: JSON.stringify({
+                  details: item,
+                  relatedTransactions: item?.relatedTransactions,
+                  bankDescription: item?.bankDescription,
+                }),
+                cardId: null,  // لا توجد بطاقة مرتبطة
+                status: itemStatus,
+                bankCreatedAt: item?.createdAt,
+              };
+            }
+          })
+        );
 
-          if (typeof callback === "function") {
-            await callback(arrangedData);
-          }
+        // إضافة البيانات الجديدة
+        if (typeof callback === "function") {
+          await callback(arrangedData);
+          console.log(`تم إضافة ${arrangedData.length} عنصرًا جديدًا.`);
         }
-
-        pollingInterval = 10000;
       }
+
+      // إعادة تعيين وقت التكرار إلى 10 ثواني
+      pollingInterval = 10000;
     } catch (error) {
+      // في حالة حدوث خطأ، قم بزيادة وقت الانتظار حتى الوصول إلى الحد الأقصى
       pollingInterval = Math.min(maxInterval, pollingInterval * 2);
     } finally {
+      // أوقف الاستدعاء السابق وابدأ استدعاء جديد
       clearInterval(intervalId);
       intervalId = setInterval(pollTransactions, pollingInterval);
-      console.log("finish polling");
+      console.log("إنتهت عملية الاستعلام");
     }
   };
 
+  // بدء عملية الاستعلام عند استدعاء الدالة
   intervalId = setInterval(pollTransactions, pollingInterval);
 
+  // دالة لإيقاف التكرار عند الحاجة
   return () => clearInterval(intervalId);
 };
+
+
+
+
 
 
 
