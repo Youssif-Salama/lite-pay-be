@@ -139,11 +139,9 @@ export const displayBankTransactionsInterval = (callback) => {
       const transactions = data?.transactions;
 
       const existingTransactions = await transactionModel.findAll({
-        attributes: ["transactionId","cardId"],
+        attributes: ["transactionId", "cardId", "bankCardId"],
       });
-      const existingTransactionIds = existingTransactions.map(
-        (tx) => tx.transactionId
-      );
+      const existingTransactionIds = existingTransactions.map((tx) => tx.transactionId);
 
       const filteredData = transactions
         .filter((item) => item)
@@ -188,32 +186,8 @@ export const displayBankTransactionsInterval = (callback) => {
         );
 
         if (typeof callback === "function") {
+          console.log("تم إضافة", arrangedData.length, "عنصرًا جديدًا.");
           await callback(arrangedData);
-          console.log(`تم إضافة ${arrangedData.length} عنصرًا جديدًا.`);
-
-          // إعادة محاولة المعاملات التي لم تجد بطاقة مرتبطة بها
-          const missingCardTransactions = existingTransactions.filter((t) => t.cardId === null);
-
-          if (missingCardTransactions.length > 0) {
-            console.log(`إعادة محاولة ${missingCardTransactions.length} معاملة بدون بطاقة.`);
-
-            const updatedTransactions = await Promise.all(
-              missingCardTransactions.map(async (tx) => {
-                const updatedCard = cards.find((card) => card.bankId === tx.bankCardId);
-                if (updatedCard) {
-                  tx.cardId = updatedCard.id;
-                }
-                return tx;
-              })
-            );
-
-            // تأكيد أن هناك تحديثات جديدة لإرسالها
-            const transactionsToRetry = updatedTransactions.filter((tx) => tx.cardId !== null);
-            if (transactionsToRetry.length > 0) {
-              await callback(transactionsToRetry);
-              console.log(`تم تحديث ${transactionsToRetry.length} معاملة بعد العثور على البطاقة.`);
-            }
-          }
         }
       }
 
@@ -221,6 +195,35 @@ export const displayBankTransactionsInterval = (callback) => {
     } catch (error) {
       pollingInterval = Math.min(maxInterval, pollingInterval * 2);
     } finally {
+      // تحديث فقط المعاملات التي تم العثور لها على بطاقة
+      setTimeout(async () => {
+        const transactionsWithoutCard = await transactionModel.findAll({
+          where: { cardId: null },
+          attributes: ["transactionId", "bankCardId"],
+        });
+
+        if (transactionsWithoutCard.length > 0) {
+          const cards = await cardModel.findAll();
+
+          const transactionsToUpdate = transactionsWithoutCard
+            .map((transaction) => {
+              const matchedCard = cards.find((card) => card.bankId === transaction.bankCardId);
+              return matchedCard ? { transactionId: transaction.transactionId, cardId: matchedCard.id } : null;
+            })
+            .filter(Boolean); // إزالة القيم null
+
+          if (transactionsToUpdate.length > 0) {
+            await Promise.all(
+              transactionsToUpdate.map(({ transactionId, cardId }) =>
+                transactionModel.update({ cardId }, { where: { transactionId } })
+              )
+            );
+
+            console.log(`تم تحديث ${transactionsToUpdate.length} معاملة بإضافة cardId.`);
+          }
+        }
+      }, 5000); // تأخير بسيط قبل التحقق من البطاقات
+
       clearInterval(intervalId);
       intervalId = setInterval(pollTransactions, pollingInterval);
       console.log("إنتهت عملية الاستعلام");
@@ -228,9 +231,11 @@ export const displayBankTransactionsInterval = (callback) => {
   };
 
   intervalId = setInterval(pollTransactions, pollingInterval);
-
   return () => clearInterval(intervalId);
 };
+
+
+
 
 
 const queryQueue = new Queue('card-balance-processing', {
