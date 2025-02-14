@@ -8,13 +8,13 @@ env.config();
 
 // add new card
 export const addNewCard=ErrorHandlerService(async(req,res)=>{
-  const expiryTestDate=DateService(1);
+  // const expiryTestDate=DateService(1);
   // const get request from reqests by its id
   const {requestId,cardNumber,cvv,type,cardBalance,expiryDate,bankId}=req.body;
 
-  const isDateEqual=checkDatesEquality(expiryTestDate,expiryDate);
+  // const isDateEqual=checkDatesEquality(expiryTestDate,expiryDate);
 
-  if(!isDateEqual) throw new AppErrorService(400,"invalid expiry date");
+  // if(!isDateEqual) throw new AppErrorService(400,"invalid expiry date");
 
   const findRequest=await requestModel.findByPk(requestId);
   if(!findRequest) throw new AppErrorService(404,"request not found");

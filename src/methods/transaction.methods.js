@@ -139,7 +139,7 @@ export const displayBankTransactionsInterval = (callback) => {
       const transactions = data?.transactions;
 
       const existingTransactions = await transactionModel.findAll({
-        attributes: ["transactionId"],
+        attributes: ["transactionId","cardId"],
       });
       const existingTransactionIds = existingTransactions.map(
         (tx) => tx.transactionId
@@ -192,7 +192,7 @@ export const displayBankTransactionsInterval = (callback) => {
           console.log(`تم إضافة ${arrangedData.length} عنصرًا جديدًا.`);
 
           // إعادة محاولة المعاملات التي لم تجد بطاقة مرتبطة بها
-          const missingCardTransactions = arrangedData.filter((t) => t.cardId === null);
+          const missingCardTransactions = existingTransactions.filter((t) => t.cardId === null);
 
           if (missingCardTransactions.length > 0) {
             console.log(`إعادة محاولة ${missingCardTransactions.length} معاملة بدون بطاقة.`);
