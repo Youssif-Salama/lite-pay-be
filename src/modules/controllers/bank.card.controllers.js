@@ -100,40 +100,14 @@ export const fetchMyCards = ErrorHandlerService(async (req, res) => {
  * Fetches the bank transactions from the bank API, with an optional start parameter.
  */
 export const fetchTransactions = ErrorHandlerService(async (req, res) => {
-  const { start } = req.query; // Get the 'start' query parameter
-
+  let {limit=500,offset=0}=req.query
   // Construct the transactions URL with optional start date handling
   let path = '/transactions';
-  if (start) {
-    // Handle the start time format and increment the second
-    const withoutMs = start.split('.')[0];
-    let [date, time] = withoutMs.split('T');
-    let [hours, minutes, seconds] = time.split(':');
 
-    seconds = (parseInt(seconds) + 1).toString().padStart(2, '0');
-
-    if (parseInt(seconds) > 59) {
-      seconds = '00';
-      minutes = (parseInt(minutes) + 1).toString().padStart(2, '0');
-
-      if (parseInt(minutes) > 59) {
-        minutes = '00';
-        hours = (parseInt(hours) + 1).toString().padStart(2, '0');
-
-        if (parseInt(hours) > 23) {
-          hours = '00';
-          // Handle day overflow if needed
-        }
-      }
-    }
-
-    start = `${date}T${hours}:${minutes}:${seconds}Z`;
-    path += `?start=${start}`;
-  }
 
   // Remove the last character from the Bank_Api_Url before appending the transactions endpoint
   const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1); // Removes the last character
-  const url = `${modifiedUrl}/${process.env.Bank_Id}${path}`;
+  const url = `${modifiedUrl}/${process.env.Bank_Id}${path}?limit=${limit}&offset=${offset}`;
 
   const data = await fetchFromBankApi(url);
   res.status(200).json({ message: "Transactions fetched successfully", data });

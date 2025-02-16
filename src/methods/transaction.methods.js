@@ -1,25 +1,65 @@
 import { cardModel, transactionModel } from "../../db/dbConnection.js";
 import { fetchFromBankApi } from "../modules/controllers/bank.card.controllers.js";
-import fetchBrandData from "../services/Avatar.services.js";
+// import fetchBrandData from "../services/Avatar.services.js";
 import { AppErrorService, ErrorHandlerService } from "../services/ErrorHandler.services.js";
 import Queue from 'bull';
 import env from "dotenv";
 env.config();
 
+const getAllTransactions = async (offsetParam, limitParam) => {
+  let offset = offsetParam;
+  const limit = limitParam;
+  let start = new Date('2024-08-01');
+  const fDay = new Date('2025-01-01');
+  let today = new Date();
+
+    const path = "/transactions";
+  const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1);
+  const url = `${modifiedUrl}/${process.env.Bank_Id}${path}`;
+
+  // Ensure proper date formatting
+  const todayFormatted = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // Calculate the month difference
+  const monthsDiff = (todayFormatted.getFullYear() - fDay.getFullYear()) * 12 + (todayFormatted.getMonth() - fDay.getMonth());
+
+  if (monthsDiff >= 4) {
+    start = todayFormatted;
+  }
+
+  const startDateParam = `start=${start.toISOString().split('T')[0]}`;
+  const endDateParam = `end=${todayFormatted.toISOString().split('T')[0]}`;
+
+  let data = await fetchFromBankApi(`${url}?${startDateParam}&${endDateParam}&limit=${limit}&offset=${offset}`);
+
+  return data?.transactions;
+};
 
 export const displayBankTransactionsInterval = (callback) => {
   let pollingInterval = 10000;
   const maxInterval = 20000;
   let intervalId;
-
-  const path = "/transactions";
-  const modifiedUrl = process.env.Bank_Api_Url.slice(0, -1);
-  const url = `${modifiedUrl}/${process.env.Bank_Id}${path}`;
-
+  let offset = 0;
+  let limit = 500;
+  let flag = false;
   const pollTransactions = async () => {
     try {
-      const data = await fetchFromBankApi(url);
-      const transactions = data?.transactions;
+      const transactions = await getAllTransactions(offset, limit);
+
+      if (transactions.length === 0) {
+        console.log("No transactions found. Resetting offset and restarting polling...");
+
+        offset = 0;
+        clearInterval(intervalId);
+        setTimeout(() => {
+          intervalId = setInterval(pollTransactions, pollingInterval);
+        }, 5000);
+        return;
+      }else{
+        offset += limit;
+        console.log("transactions found", transactions.length,offset);
+
+      }
 
       const existingTransactions = await transactionModel.findAll({
         attributes: ["transactionId"],
@@ -28,7 +68,6 @@ export const displayBankTransactionsInterval = (callback) => {
         (tx) => tx.transactionId
       );
 
-      // تصفية البيانات لعدم تكرارها بناءً على المعاملات المخزنة في قاعدة البيانات
       const filteredData = transactions
         .filter((item) => item)
         .filter((item) => !existingTransactionIds.includes(item?.id));
@@ -36,27 +75,22 @@ export const displayBankTransactionsInterval = (callback) => {
       const cards = await cardModel.findAll();
 
       if (filteredData.length > 0) {
-        // تجهيز البيانات الجديدة
         const arrangedData = await Promise.all(
           filteredData.map(async (item) => {
-            const avatar = await fetchBrandData(item?.counterpartyName);
-
             let amount = item?.amount;
             if (item?.relatedTransactions?.amount) {
               amount += item?.relatedTransactions?.amount;
             }
 
-            let itemStatus = "approved";
+            let itemStatus = "pending";
             if (item?.status === "sent") itemStatus = "approved";
             if (item?.status === "failed") itemStatus = "rejected";
 
-            // إذا كانت المعاملة تحتوي على details (معلومات البطاقة)
             if (item?.details?.debitCardInfo) {
               return {
                 amount: amount,
                 transactionId: item?.id,
                 companyName: item?.counterpartyName,
-                avatar: avatar,
                 date: item?.estimatedDeliveryDate,
                 time: item?.postedAt,
                 failureReason: item?.reasonForFailure,
@@ -72,12 +106,10 @@ export const displayBankTransactionsInterval = (callback) => {
                 bankCreatedAt: item?.createdAt,
               };
             } else {
-              // إذا كانت المعاملة لا تحتوي على details
               return {
                 amount: amount,
                 transactionId: item?.id,
                 companyName: item?.counterpartyName,
-                avatar: avatar,
                 date: item?.estimatedDeliveryDate,
                 time: item?.postedAt,
                 failureReason: item?.reasonForFailure,
@@ -103,53 +135,39 @@ export const displayBankTransactionsInterval = (callback) => {
         }
       }
 
-      // إعادة تعيين وقت التكرار إلى 10 ثواني
       pollingInterval = 10000;
     } catch (error) {
-      // في حالة حدوث خطأ، قم بزيادة وقت الانتظار حتى الوصول إلى الحد الأقصى
       pollingInterval = Math.min(maxInterval, pollingInterval * 2);
-    }
-    finally {
-      // تحديث فقط المعاملات التي تم العثور لها على بطاقة
-      setTimeout(async () => {
-        const transactionsWithoutCard = await transactionModel.findAll({
-          where: { cardId: null },
-          attributes: ["transactionId", "bankCardId"],
+    } finally {
+      try {
+        const existingNullCardTransactions = await transactionModel.findAll({
+          attributes: ["transactionId", "bankCardId", "cardId"],
+          where: { cardId: null }
         });
 
-        if (transactionsWithoutCard.length > 0) {
+        if (existingNullCardTransactions.length > 0) {
+
           const cards = await cardModel.findAll();
 
-          const transactionsToUpdate = transactionsWithoutCard
-            .map((transaction) => {
-              const matchedCard = cards.find((card) => card.bankId === transaction.bankCardId);
-              return matchedCard ? { transactionId: transaction.transactionId, cardId: matchedCard.id } : null;
-            })
-            .filter(Boolean); // إزالة القيم null
+          for (const transaction of existingNullCardTransactions) {
+            const matchingCard = cards.find((card) => card.bankId === transaction.bankCardId);
 
-          if (transactionsToUpdate.length > 0) {
-            await Promise.all(
-              transactionsToUpdate.map(({ transactionId, cardId }) =>
-                transactionModel.update({ cardId }, { where: { transactionId } })
-              )
-            );
-
-            console.log(`تم تحديث ${transactionsToUpdate.length} معاملة بإضافة cardId.`);
+            if (matchingCard?.id) {
+              await transactionModel.update(
+                { cardId: matchingCard.id },
+                { where: { transactionId: transaction.transactionId } }
+              );
+              console.log(`تم تحديث المعاملة ${transaction.transactionId} وإسناد البطاقة الجديدة.`);
+            }
           }
         }
-      }, 5000); // تأخير بسيط قبل التحقق من البطاقات
-
+      } catch (updateError) {
+        console.error("Error updating transactions with missing cardId:", updateError);
+      }
       clearInterval(intervalId);
       intervalId = setInterval(pollTransactions, pollingInterval);
-      console.log("إنتهت عملية الاستعلام");
+      console.log("Polling process finished.");
     }
-
-    // finally {
-    //   // أوقف الاستدعاء السابق وابدأ استدعاء جديد
-    //   clearInterval(intervalId);
-    //   intervalId = setInterval(pollTransactions, pollingInterval);
-    //   console.log("إنتهت عملية الاستعلام");
-    // }
   };
 
   // بدء عملية الاستعلام عند استدعاء الدالة
